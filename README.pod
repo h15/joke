@@ -23,7 +23,7 @@ CodeWars - движок для сайта L<http://LorCode.org>.
 templates.
 В templates лежат view файлы, которые тольком ещё не писались, поэтому,
 содержимое этой папки особого интереса не предстваляет.
-C<
+
     lib
     `- CodeWars.pm             # Init, routes     [DB & signed cookies]
        |- DB.pm                # DataBase init & handler
@@ -32,6 +32,5 @@ C<
           |- Auths.pm          # Login/out, check
           `- Forum
              `- Topics.pm      # CRUD for topics
->
 
 =cut
