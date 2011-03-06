@@ -1,28 +1,28 @@
 
 =pod
 
-CodeWars - движок для сайта L<http://LorCode.org>.
+CodeWars is a web application for L<http://LorCode.org>.
 
-=head2 Обзор
+=head2 Overview
 
-Данный движок должен предоствлять достаточный набор функций для совмест-
-ных обсуждения, разработки, документирования и обучения разработчиков.
+This application should give to developers tools for joint discuss,
+develop, documentation and study.
 
-=head2 Техническая сторона
+=head2 The technical side
 
-=head3 Инструменты
+=head3 Tools
 
-Для разработки используются Mojolicious - web framework на Perl.
-В качестве базы данных хоть и используется MySQL, код не завязан на
-какой-то понкретной бд.
-Движок совместим (но не обраносовсестим) с phpbb3.
+CodeWars uses Mojolicious. Mojolicious is web framework for Perl.
+Also it uses MySQL for database. It's not necessary, we can use other
+databases but CodeWars is using MySQL now.
+It can use data from phpbb3 application but CodeWars will break
+structure of phpbb3.
 
-=head3 Структура
+=head3 Structure
 
-От обычного Mojolicious приложения это отличается только папками lib и
-templates.
-В templates лежат view файлы, которые тольком ещё не писались, поэтому,
-содержимое этой папки особого интереса не предстваляет.
+It's a regular Mojolicious application. Only 'lib' and 'templates'
+folders are interesting.
+'templates' consists view-files. They are not written almost.
 
     lib
     `- CodeWars.pm             # Init, routes     [DB & signed cookies]
