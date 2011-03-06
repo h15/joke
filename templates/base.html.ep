@@ -1,0 +1,13 @@
+% languages 'ru';
+<!doctype html>
+<html>
+  <head>
+	<link rel='stylesheet'  href='<%= url_for('style_main') %>' type='text/css' media='all' />
+    <%= content extra_headers => begin %>
+    <% end %>
+  </head>
+  <body>
+    <%= content body => begin %>
+    <% end %>
+  </body>
+</html>
