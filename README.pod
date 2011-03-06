@@ -1,0 +1,24 @@
+=pod
+=head1 Название
+CodeWars - движок для сайта LorCode.org.
+=head1 Обзор
+Данный движок должен предоствлять достаточный набор функций для совмест-
+ных обсуждения, разработки, документирования и обучения разработчиков.
+=head1 Техническая сторона
+=head2 Инструменты
+Для разработки используются Mojolicious - web framework на Perl.
+В качестве базы данных хоть и используется MySQL, код не завязан на
+какой-то понкретной бд.
+Движок совместим (но не обраносовсестим) с phpbb3.
+=head2 Структура
+C<
+    lib
+    `- CodeWars.pm             # Init, routes     [DB & signed cookies]
+       |- DB.pm                # DataBase init & handler
+       |- Utils.pm             # Some useful functions           [salt]
+       `- Controller
+          |- Auths.pm          # Login/out, check
+          `- Forum
+             `- Topics.pm      # CRUD for topics
+>
+=cut
