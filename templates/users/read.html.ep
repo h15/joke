@@ -1,0 +1,31 @@
+% extends 'base';
+<%= content extra_headers => begin %>
+	<title>
+		<%=l 'user' %> <%= $id %>
+	</title>
+<% end %>
+
+<%= content body => begin %>
+<div class=page>
+    <div class=user>
+        <table>
+            <tr>
+                <td><%=l 'id' %></td>
+                <td><%= $id %></td>
+            </tr>
+            <tr>
+                <td><%=l 'name' %></td>
+                <td><%= $name %></td>
+            </tr>
+            <tr>
+                <td><%=l 'registered' %></td>
+                <td><%= $regdate %></td>
+            </tr>
+            <tr>
+                <td><%=l 'status' %></td>
+                <td><%=l $isActive? 'active':'inactive' %></td>
+            </tr>
+        </table>
+    </div>
+</div>
+<% end %>

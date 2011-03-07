@@ -9,7 +9,7 @@ sub login {
 	my $db = CodeWars::DB->handler();
 	
 	# It's not an e-mail!
-	unless( CodeWars::Utils->isMail( $self->param('mail') ) ) {
+	unless( CodeWars::Utils->isMail($self->param('mail') ) ) {
 		CodeWars::Utils->riseError("It's not an e-mail!");
 	}
 	
@@ -31,17 +31,24 @@ sub login {
     
     my $user = $users[0];
     
-    # hash != md5( salt + md5( regdate + md5( password ) ) )
+    # hash != md5( salt + regdate + password )
     return false if $user->{'password'} ne md5_hex
-		CodeWars::Utils->salt() . md5_hex
-			$user->{'regdate'} . md5_hex $self->param('passwd');
+		CodeWars::Utils->salt() . $user->{'regdate'} .
+            $self->param('passwd');
 	
 	# Init session.
 	$self->session(
 		user_id  => $user->{'id'},
-		username => $user->{'username'},
-		role     => $user->{'role'}
-	)->redirect_to('users_read');
+	)->redirect_to('me');
+}
+
+sub logout {
+    my $self = shift;
+    
+    # Delete session.
+	$self->session(
+		user_id  => '',
+	)->redirect_to('index');
 }
 
 1;

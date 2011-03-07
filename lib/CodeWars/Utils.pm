@@ -1,9 +1,9 @@
 package CodeWars::Utils;
 
 sub isMail {
-	my $mail = shift;
+	my ($shift, $mail) = @_;
 	
-	return true if $mail =~ m/^[a-z0-9_-.]+@[a-z0-9_-.]+$/i;
+	return true if $mail =~ m/^[a-z0-9_\-.]+@[a-z0-9_\-.]+$/i;
 	return false;
 }
 
@@ -23,7 +23,7 @@ sub riseError {
 	exit(0);
 }
 
-sub salt {
+sub salt {                                                     # [SALT]
 	return 'some long hash';
 }
 
