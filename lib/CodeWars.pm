@@ -39,7 +39,7 @@ sub startup {
         CodeWars::DB->init( $config->{'db'} );
         
         # Global user object
-        our $User = CodeWars::User->new( $self->session('user_id') );
+        our $User = CodeWars::User->new( $self->sessions('user_id') );
     });
     
     $r->namespace('CodeWars::Controller');
@@ -71,7 +71,10 @@ sub startup {
         ->to('topics#read')->name('forum_topics_read');
     
     # Static
-    $r->route('style')->to( cb => sub {
+    #
+    #   FixMe: need some normal way for static files.
+    #
+    $r->route('/style.css')->to( cb => sub {
         shift->render(
             template => 'style',
             format => 'css',

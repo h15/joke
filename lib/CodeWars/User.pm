@@ -3,9 +3,9 @@ package CodeWars::User;
 sub new {
     my ($self, $id) = @_;
     my $db = CodeWars::DB->handler();
-
+    
     # Anonymous has 1st id.
-    $id ||= 1;
+    $id = 1 unless $id =~ /^[:digit:]$/;
 
 	# Get accounts by id.
 	my @users = $db->select(

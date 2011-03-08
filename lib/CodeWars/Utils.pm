@@ -32,7 +32,7 @@ sub riseError {
 	exit(0);
 }
 
-sub salt {                                                     # [SALT]
+sub salt {
 	return $salt;
 }
 
