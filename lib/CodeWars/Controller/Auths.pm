@@ -10,7 +10,8 @@ sub login {
 	
 	# It's not an e-mail!
 	unless( CodeWars::Utils->isMail($self->param('mail') ) ) {
-		CodeWars::Utils->riseError("It's not an e-mail!");
+		CodeWars::Utils->riseError(
+            "It's not an e-mail!");
 	}
 	
 	# Get accounts by e-mail.
@@ -39,7 +40,7 @@ sub login {
 	# Init session.
 	$self->session(
 		user_id  => $user->{'id'},
-	)->redirect_to('me');
+	)->redirect_to('index');
 }
 
 sub logout {

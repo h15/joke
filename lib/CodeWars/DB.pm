@@ -16,7 +16,7 @@ sub init {
             RaiseError => 1,
             mysql_enable_utf8 => 1
         }
-    ) or die DBIx::Simple->error;
+    ) or CodeWars::Utils->riseError("Cann't initialize database connection");
 
     $dbHandler->abstract = SQL::Abstract->new(
         case    => 'lower',

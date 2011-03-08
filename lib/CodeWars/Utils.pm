@@ -1,7 +1,16 @@
 package CodeWars::Utils;
 
+use base 'Mojolicious::Controller';
+
+my ($canTrollErr, $salt);
+
+sub init {
+    my $self = shift;
+    ($canTrollErr, $salt) = @_;
+}
+
 sub isMail {
-	my ($shift, $mail) = @_;
+	my ($elf, $mail) = @_;
 	
 	return true if $mail =~ m/^[a-z0-9_\-.]+@[a-z0-9_\-.]+$/i;
 	return false;
@@ -10,11 +19,11 @@ sub isMail {
 sub riseError {
 	my ($self, $message) = @_;
 	
-	$self->stash(
+	$canTrollErr->stash(
 		message => $message
 	);
 	
-	$self->render(
+	$canTrollErr->render(
 		template => 'error',
 		format => 'html'
 	);
@@ -24,7 +33,7 @@ sub riseError {
 }
 
 sub salt {                                                     # [SALT]
-	return 'some long hash';
+	return $salt;
 }
 
 1;

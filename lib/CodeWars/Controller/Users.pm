@@ -11,12 +11,12 @@ sub read {
         return;
     }
 
-    my ($sec,$min,$hour,$mday,$mon,$year) =
-                        localtime( ${CodeWars::User}->{'regdate'} );
-    $year += 1900;
+    my ($s,$i,$h,$d,$m,$Y) = localtime( ${CodeWars::User}->{'regdate'} );
+    
+    $Y += 1900;
 
     $self->stash(
-        regdate => "$year.$mon.$mday $hour:$min:$sec",
+        regdate => "$Y.$m.$d $h:$i:$s",
         name => ${CodeWars::User}->{'name'},
         isActive => ${CodeWars::User}->isActive(),
     );
