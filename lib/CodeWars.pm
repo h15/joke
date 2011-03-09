@@ -72,14 +72,8 @@ sub startup {
     
     # Static
     #
-    #   FixMe: need some normal way for static files.
+    #   All static files are locating in /public
     #
-    $r->route('/style.css')->to( cb => sub {
-        shift->render(
-            template => 'style',
-            format => 'css',
-        );
-    })->name('style_main');
     
     # Include internalization plugin
     $self->plugin('i18n');
