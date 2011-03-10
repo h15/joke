@@ -3,25 +3,37 @@ package CodeWars::Controller::Users;
 use base 'Mojolicious::Controller';
 
 sub read {
-    our $self = shift;
+    my $self = shift;
+    my $db = CodeWars::DB->handler();
 
-    if( $self->param('id') == ${CodeWars::User}->{'id'}
-            || ${CodeWars::User}->isAdmin ) {
-        $self->read_extended();
+	# Get accounts by id.
+	my @users = $db->select(
+        'forum__users', '*',
+        {
+            id => $self->stash('id')
+        }
+    )->hashes;
+    
+    if( $self->stash('id') == ${CodeWars::User}->{'id'}
+            || ${CodeWars::User}->isAdmin() ) {
+        $self->read_extended(@users);
         return;
     }
 
-    my ($s,$i,$h,$d,$m,$Y) = localtime( ${CodeWars::User}->{'regdate'} );
-    
-    $Y += 1900;
-
     $self->stash(
-        regdate => "$Y.$m.$d $h:$i:$s",
-        name => ${CodeWars::User}->{'name'},
-        isActive => ${CodeWars::User}->isActive(),
+        user => $users[0]
     );
 
     $self->render;
+}
+
+sub read_extended {
+    my $self = shift;
+    my @users = @_;
+    
+    $self->render(
+        action => 'read_extended',
+    );
 }
 
 1;

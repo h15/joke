@@ -38,37 +38,37 @@ sub startup {
         # DataBase init
         CodeWars::DB->init( $config->{'db'} );
         
+        my $session = $self->sessions;
+        
         # Global user object
-        our $User = CodeWars::User->new( $self->sessions('user_id') );
+        our $User = CodeWars::User->new( $session->{'user_id'} );
     });
     
-    $r->namespace('CodeWars::Controller');
+    $route->namespace('CodeWars::Controller');
 
-    $r->route('/')->to('news#list', size => 10)->name('index');
+    #$r->route('/')->to('news#list', size => 10)->name('index');
     
     # News
-    $r->route('/news/:id', id => qr/\d+/)->via('get')
-        ->to('news#read')->name('news_read');
-    $r->route('/news/new', id => qr/\d+/)->via('post')
-        ->to('news#create')->name('news_create');
+    #$r->route('/news/:id', id => qr/\d+/)->via('get')
+    #    ->to('news#read')->name('news_read');
+    #$r->route('/news/new', id => qr/\d+/)->via('post')
+    #    ->to('news#create')->name('news_create');
     
     # Sessions
-    $r->route('/login')->via('post')->to('auths#login')->name('login');
-    $r->route('/logout')->to('auths#logout')->name('logout');
+    #$r->route('/login')->via('post')->to('auths#login')->name('login');
+    #$r->route('/logout')->to('auths#logout')->name('logout');
 
     # User
     $r->route('/user/:id')->via('get')->to('users#read')
         ->name('users_read');
-    $r->route('/user/:id')->via('put')->to('users#update');
-    $r->route('/user/:id')->via('delete')->to('users#delete');
-    $r->route('/user/new')->via('post')->to('users#create')
-        ->name('users_create');
+    #$r->route('/user/:id')->via('put')->to('users#update');
+    #$r->route('/user/:id')->via('delete')->to('users#delete');
+    #$r->route('/user/new')->via('post')->to('users#create')
+    #    ->name('users_create');
 
-    # Forum
-    $r->namespace('CodeWars::Controller::Forum');
-    
-    $r->route('/forum/topic/:id', id => qr/\d+/)->via('get')
-        ->to('topics#read')->name('forum_topics_read');
+    # Thread
+    $r->route('/thread/:id', id => qr/\d+/)->via('get')->to('threads#read')
+        ->name('threads_read');
     
     # Static
     #

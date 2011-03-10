@@ -26,16 +26,16 @@ sub new {
 
 sub isActive {
     my $self = shift;
-    return true if $self->{'inactive_reason'} == 0;
-    return false;
+    return 1 if $self->{'inactive_reason'} == 0;
+    return 0;
 }
 
 sub isAdmin {
     my $self = shift;
-
+    
     # In soviet Russia^W^W phpbb3 it's true.
-    return true if $self->{'role'} == 3;
-    return false;
+    return 1 if $self->{'role'} == 3;
+    return 0;
 }
 
 1;

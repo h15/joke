@@ -11,19 +11,19 @@
         <table>
             <tr>
                 <td><%=l 'id' %></td>
-                <td><%= $id %></td>
+                <td><%= $user->{'id'} %></td>
             </tr>
             <tr>
                 <td><%=l 'name' %></td>
-                <td><%= $name %></td>
+                <td><%= $user->{'name'} %></td>
             </tr>
             <tr>
                 <td><%=l 'registered' %></td>
-                <td><%= $regdate %></td>
+                <td><%= $user->{'regdate'} %></td>
             </tr>
             <tr>
                 <td><%=l 'status' %></td>
-                <td><%=l $isActive? 'active':'inactive' %></td>
+                <td><%=l $user->{'inactive_reason'}? 'inactive':'active' %></td>
             </tr>
         </table>
     </div>

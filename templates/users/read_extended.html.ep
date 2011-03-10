@@ -1,0 +1,14 @@
+% extends 'base';
+<%= content extra_headers => begin %>
+	<title>
+		<%=l 'user' %> <%= $id %>
+	</title>
+<% end %>
+
+<%= content body => begin %>
+<div class=page>
+    <div class=user>
+Do nothing
+    </div>
+</div>
+<% end %>
