@@ -25,12 +25,89 @@ folders are interesting.
 'templates' consists view-files. They are not written almost.
 
     lib
-    `- CodeWars.pm             # Init, routes     [DB & signed cookies]
-       |- DB.pm                # DataBase init & handler
-       |- Utils.pm             # Some useful functions           [salt]
+    `- CodeWars.pm              # Init, routes, config
+       |- DB.pm                 # DataBase init & handler
+       |- Utils.pm              # Some useful functions (like riseError)
+       |- User.pm               # Init user's params by session's user_id
        `- Controller
-          |- Auths.pm          # Login/out, check
-          `- Forum
-             `- Topics.pm      # CRUD for topics
+          |- Auths.pm           # Login/out, check
+          |- Users.pm           # CRUD
+          `- Threads.pm         # CRUD
+    
+    public                      # All static public files
+    `- css
+       `- main.css              # Main style file
+    
+    templates
+    |- threads
+    |  `- read.html.ep          # template for cRud
+    |- users
+    |  |- read.html.ep          # cRud
+    |  `- read_extended.html.ep # cRud for self and admins
+    |- base.html.ep             # base template
+    `- error.html.ep            # for cute death
+
+=head3 Install
+
+We need Mojolicious for CodeWars.
+
+=head4 Install Mojolicious
+
+You can read it here L<https://github.com/kraih/mojo/wiki/Installation>.
+In short:
+
+    sudo -s 'curl -L cpanmin.us | perl - Mojolicious'
+
+=head4 Create base Mojolicious Application
+
+Only special files are locating in git. For other file you need run:
+
+    mojo generate app CodeWars
+
+It makes code_wars directory.
+
+=head4 Install CodeWars
+
+You need replace directories 'lib', 'templates' and 'public' by directories
+from git.
+
+=head3 Run
+
+You can run CodeWars using command
+
+    ./script/code_wars daemon
+    
+form code_wars directory.
+
+=head3 Using phpbb3 database
+
+CodeWars is using two databases now. They are forum__users and forum__posts.
+"forum__" is a phpbb3 prefix.
+forum__posts is using with out moifications now (will change).
+forum__users modified next way:
+
+    CREATE TABLE IF NOT EXISTS `forum__users` (
+      `id` mediumint(8) unsigned NOT NULL AUTO_INCREMENT,
+      `role` tinyint(2) NOT NULL DEFAULT '0',
+      `group_id` mediumint(8) unsigned NOT NULL DEFAULT '3',
+      `regdate` int(11) unsigned NOT NULL DEFAULT '0',
+      `name` varchar(255) COLLATE utf8_bin NOT NULL DEFAULT '',
+      `password` varchar(40) COLLATE utf8_bin NOT NULL DEFAULT '',
+      `email` varchar(100) COLLATE utf8_bin NOT NULL DEFAULT '',
+      `confirm_key` varchar(10) COLLATE utf8_bin NOT NULL DEFAULT '',
+      `login_attempts` tinyint(4) NOT NULL DEFAULT '0',
+      `inactive_reason` tinyint(2) NOT NULL DEFAULT '0',
+      `inactive_time` int(11) unsigned NOT NULL DEFAULT '0',
+      `jabber` varchar(255) COLLATE utf8_bin NOT NULL DEFAULT '',
+      PRIMARY KEY (`id`),
+      KEY `user_type` (`role`)
+    ) ENGINE=MyISAM  DEFAULT CHARSET=utf8 COLLATE=utf8_bin AUTO_INCREMENT=127 ;
+
+It's the same fields but with out "user" prefix.
+
+=head3 Useful script for opening all needed files in gedit.
+
+    find lib templates README.pod -type f | grep -v '^.git' | \
+    perl -e 'chomp, $a .= " $_" for <>; `nohup gedit $a &`'
 
 =cut
