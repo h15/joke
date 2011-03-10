@@ -5,13 +5,16 @@
 
 .post {
 	margin: 5px 0px;
-	padding: 10px;
 	background: #eee;
 	border: 1px solid #ddd;
+}
+
+.rounded {
 	padding: 5px;
 	-moz-border-radius: 10px;
 	-webkit-border-radius: 10px;
 	border-radius: 10px;
+	-khtml-border-radius: 10px;
 }
 
 .date {
