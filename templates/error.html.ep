@@ -7,7 +7,7 @@
 
 <%= content body => begin %>
 <div class=page>
-    <div class=error>
+    <div class="rounded error">
         <%=l $message %>
     </div>
 </div>

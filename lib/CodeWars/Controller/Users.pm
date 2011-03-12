@@ -5,7 +5,7 @@ use base 'Mojolicious::Controller';
 sub read {
     my $self = shift;
     my $db = CodeWars::DB->handler();
-
+    
 	# Get accounts by id.
 	my @users = $db->select(
         'forum__users', '*',

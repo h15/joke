@@ -32,8 +32,10 @@ sub startup {
     #   BIG INIT
     #
     my $r = $route->bridge('/')->to(cb => sub {
-        # _shift_ for rendering errors.
-        CodeWars::Utils->init( shift, $config->{'salt'} );
+        my $elf = shift;
+        
+        # $self for rendering errors.
+        CodeWars::Utils->init( $elf, $config->{'salt'} );
         
         # DataBase init
         CodeWars::DB->init( $config->{'db'} );
@@ -55,8 +57,9 @@ sub startup {
     #    ->to('news#create')->name('news_create');
     
     # Sessions
-    #$r->route('/login')->via('post')->to('auths#login')->name('login');
-    #$r->route('/logout')->to('auths#logout')->name('logout');
+    $r->route('/login')->via('get' )->to('auths#form' )->name('auths_form' );
+    $r->route('/login')->via('post')->to('auths#login')->name('auths_login');
+    $r->route('/logout')->to('auths#logout')->name('auths_logout');
 
     # User
     $r->route('/user/:id')->via('get')->to('users#read')

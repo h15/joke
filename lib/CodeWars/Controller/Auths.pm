@@ -1,4 +1,4 @@
-package CodeWars::Controller::Auth;
+package CodeWars::Controller::Auths;
 
 use Digest::MD5 'md5_hex';
 
@@ -17,38 +17,54 @@ sub login {
 	my @users = $db->select(
         'forum__users', '*',
         {
-            user_email => $self->param('mail')
+            email => $self->param('mail')
         }
     )->hashes;
     
     # If this e-mail does not exist
     # or more than one account has this e-mail.
     unless( scalar @users == 1 ) {
-		CodeWars::Utils->riseError(
-			"This pair(e-mail and password) doesn't exist!"
+        CodeWars::Utils->riseError(
+            "This pair(e-mail and password) doesn't exist!"
 		);
 	}
     
     my $user = $users[0];
     
-    # hash != md5( salt + regdate + password )
-    return false if $user->{'password'} ne md5_hex
-		CodeWars::Utils->salt() . $user->{'regdate'} .
-            $self->param('passwd');
-	
-	# Init session.
-	$self->sessions(
-		user_id  => $user->{'id'},
-	)->redirect_to('index');
+    # Password test:
+    #   hash != md5( salt + regdate + password )
+    if( $user->{'password'} ne md5_hex (
+            CodeWars::Utils->salt() . $user->{'regdate'}
+                . $self->param('passwd') ) ) {
+        
+        CodeWars::Utils->riseError(
+            "This pair(e-mail and password) doesn't exist!"
+        );
+    }
+    
+    # Init session.
+    $self->session(
+        user_id  => $user->{'id'},
+    )->redirect_to('index');
 }
 
 sub logout {
     my $self = shift;
     
     # Delete session.
-	$self->sessions(
+	$self->session(
 		user_id  => '',
 	)->redirect_to('index');
+}
+
+sub form {
+    my $self = shift;
+    
+    #
+    #   TODO: Login counter and CAPTCHA
+    #
+    
+    $self->render;
 }
 
 1;

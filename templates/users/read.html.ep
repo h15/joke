@@ -7,8 +7,8 @@
 
 <%= content body => begin %>
 <div class=page>
-    <div class=user>
-        <table>
+    <div class="center rounded user">
+        <table class="aligncenter">
             <tr>
                 <td><%=l 'id' %></td>
                 <td><%= $user->{'id'} %></td>

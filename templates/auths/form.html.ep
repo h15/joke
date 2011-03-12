@@ -1,0 +1,37 @@
+% extends 'base';
+<%= content extra_headers => begin %>
+	<title>
+		<%=l 'Login' %>
+	</title>
+<% end %>
+
+<%= content body => begin %>
+<div class=page>
+    <form method=post action="<%= url_for('auths_login') %>">
+	    <table class="center rounded">
+	        <tr>
+	            <td>
+	                <%=l 'e-mail' %>
+	            </td>
+	            <td>
+	                <input name=mail>
+	            </td>
+	        </tr>
+	        <tr>
+	            <td>
+	                <%=l 'password' %>
+	            </td>
+	            <td>
+	                <input type=password name=passwd>
+	            </td>
+	        </tr>
+	        <tr>
+	            <td>
+	            </td>
+	            <td>
+	                <input type=submit value="<%=l 'send' %>" class="alignright">
+	            </td>
+	        </tr>
+	    </table>
+</div>
+<% end %>

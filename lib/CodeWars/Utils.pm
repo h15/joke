@@ -10,7 +10,7 @@ sub init {
 }
 
 sub isMail {
-	my ($elf, $mail) = @_;
+	my ($self, $mail) = @_;
 	
 	return true if $mail =~ m/^[a-z0-9_\-.]+@[a-z0-9_\-.]+$/i;
 	return false;
@@ -29,7 +29,7 @@ sub riseError {
 	);
 		
 	# Should never be here but who knows?..
-	exit(0);
+	#exit(0);
 }
 
 sub salt {
