@@ -4,14 +4,15 @@ use base 'Mojolicious::Controller';
 
 sub read {
 	my $self = shift;
-	my $db = CodeWars::DB->handler();
 	
-    my @posts = $db->select(
-        'forum__posts', '*',
+    my @posts = $self->select(
+        posts => '*' =>
         {
             topic_id => $self->param('id')
         }
-    )->hashes;
+    );
+    
+    $self->error("Thread with this id doesn't exist!") unless scalar @posts;
 
     $self->stash(
         posts => \@posts
@@ -21,3 +22,4 @@ sub read {
 }
 
 1;
+

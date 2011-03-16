@@ -5,41 +5,33 @@ use Digest::MD5 'md5_hex';
 use base 'Mojolicious::Controller';
 
 sub login {
+    #
+    #   TODO: Login attempts counter for ip via CodeWars::Utils
+    #
+    
 	my $self = shift;
-	my $db = CodeWars::DB->handler();
 	
 	# It's not an e-mail!
-	unless( CodeWars::Utils->isMail($self->param('mail') ) ) {
-		CodeWars::Utils->riseError("It's not an e-mail!");
-	}
+	$self->IS( mail => $self->param('mail')	);
 	
 	# Get accounts by e-mail.
-	my @users = $db->select(
-        'forum__users', '*',
-        {
-            email => $self->param('mail')
-        }
-    )->hashes;
+	my @users = $self->select( users => '*', {email => $self->param('mail')} );
     
     # If this e-mail does not exist
     # or more than one account has this e-mail.
-    unless( scalar @users == 1 ) {
-        CodeWars::Utils->riseError(
-            "This pair(e-mail and password) doesn't exist!"
-		);
-	}
+    $self->error("This pair(e-mail and password) doesn't exist!") if $#users;
     
     my $user = $users[0];
     
     # Password test:
-    #   hash != md5( salt + regdate + password )
-    if( $user->{'password'} ne md5_hex (
-            CodeWars::Utils->salt() . $user->{'regdate'}
-                . $self->param('passwd') ) ) {
+    #   hash != md5( regdate + password + salt )
+    my $s = $user->{'regdate'} . $self->param('passwd') . $self->stash('salt');
+    
+    if ( $user->{'password'} ne md5_hex($s) ) {
+        $self->error( "This pair(e-mail and password) doesn't exist!" );
         
-        CodeWars::Utils->riseError(
-            "This pair(e-mail and password) doesn't exist!"
-        );
+        # Don't work without return. I don't know why.
+        return;
     }
     
     # Init session.
@@ -68,3 +60,4 @@ sub form {
 }
 
 1;
+

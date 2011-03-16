@@ -37,6 +37,15 @@
     text-align:center;
 }
 
+.done {
+    width: 600px;
+    background: #efe;
+    border: 1px solid #cfc;
+    padding: 50px;
+    margin: 50px auto;
+    text-align:center;
+}
+
 .user {
     width:600px;
 }

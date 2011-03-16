@@ -1,0 +1,14 @@
+% extends 'base';
+<%= content extra_headers => begin %>
+	<title>
+		<%=l 'Done' %>
+	</title>
+<% end %>
+
+<%= content body => begin %>
+<div class=page>
+    <div class="rounded done">
+        <%=l $message %>
+    </div>
+</div>
+<% end %>
