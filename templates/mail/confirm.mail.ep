@@ -1,0 +1,14 @@
+<h2><%=l $reason %></h2>
+<p>
+    <%=l "Do you realy want to" %> <%=l lc( $reason ) %> ?
+    [<a href="<%= url_for('auths_login_by_mail') %>?mail=<%= MIME::Base64::encode_base64($mail) %>&key=<%= $key %>">confirm</a>]
+    <%=l "If you don't - ignore this message." %>
+</p>
+
+<p>
+    <%=l "Don't respond on this message; it was generated automatically." %>
+</p>
+
+<p>
+    <%=l "With best regards LorCode team." %>
+</p>

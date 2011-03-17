@@ -36,13 +36,13 @@ sub new {
     bless $users[0], $self;
 }
 
-sub isActive {
+sub is_active {
     my $self = shift;
     return 1 if $self->{'inactive_reason'} == 0;
     return 0;
 }
 
-sub isAdmin {
+sub is_admin {
     my $self = shift;
     
     # In soviet Russia^W^W phpbb3 it's true.

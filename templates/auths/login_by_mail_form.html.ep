@@ -7,7 +7,7 @@
 
 <%= content body => begin %>
 <div class=page>
-    <form method=post action="<%= url_for('users_forgot_request') %>">
+    <form method=post action="<%= url_for('auths_login_by_mail_request') %>">
 	    <table class="center rounded">
 	        <tr>
 	            <td>

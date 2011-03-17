@@ -29,7 +29,7 @@ sub register {
 	$plugin->conf( $conf ) if $conf;
 	
 	$app->renderer->add_helper(
-		sendMail => sub {
+		send_mail => sub {
 			my $self = shift;
 			my $args = @_ ? { @_ } : return;
 			

@@ -2,6 +2,8 @@ package Mojolicious::Plugin::Validate;
 
 use Mojo::Base 'Mojolicious::Plugin';
 
+our $VERSION = '0.1';
+
 sub register {
     my ( $self, $app ) = @_;
 

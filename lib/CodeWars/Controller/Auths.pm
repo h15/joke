@@ -59,5 +59,62 @@ sub form {
     $self->render;
 }
 
+
+sub login_by_mail_form {
+    #
+    #   TODO: counter & CAPTCHA
+    #
+    my $self = shift;
+    
+    $self->render;
+}
+
+sub login_by_mail_request {
+    my $self = shift;
+    
+    #
+    #   Check input
+    #
+	
+	$self->IS( mail => $self->param('mail') );
+	
+    # Get accounts by e-mail.
+	my @users = $self->select( users => '*' => {email => $self->param('mail')} );
+    
+    # if 0 - all fine
+    $self->error( "This e-mail doesn't exist in data base!" ) if $#users;
+    
+    #
+    # Generate and save confirm key.
+    #
+    
+    my $confirm_key = md5_hex(rand);
+    
+    $self->update(
+        "users",
+        
+        # fields
+        {
+            confirm_key  => $confirm_key,
+            confirm_date => time
+        },
+        
+        # where
+        {
+            email => $self->param('mail')
+        }
+    );
+    
+    #
+    # Send mail
+    #
+    
+    $self->mail->confirm ({
+        reason  => 'Change password',
+        mail    => $self->param('mail'),
+        key     => $confirm_key
+    }); 
+}
+
 1;
 

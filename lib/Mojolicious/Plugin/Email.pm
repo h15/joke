@@ -2,56 +2,52 @@ package Mojolicious::Plugin::Email;
 
 use Mojo::Base 'Mojolicious::Plugin';
 
+our $VERSION = '0.1';
+
 sub register {
     my ( $self, $app, $conf ) = @_;
     
     $app->helper (
         mail => sub {
-            # $self->mail( confirm => {mail => "me@ho.me"} )
-            my ($self, $action, $data) = @_;
+            return shift;
+        }
+    );
+    
+    $app->helper (
+        confirm => sub {
+            my ($self, $data) = @_;
             
-            my %actions = {
-                confirm => \confirm($data),
-            };
+            $self->send (
+                confirm => $data
+            );
+        }
+    );
+    
+    $app->helper (
+        send => sub {
+            my ($self, $template, $data) = @_;
             
-            $actions{$action};
+            $self->stash (
+                controller => "mail",
+                action     => $template
+            );
+            
+            my $body = $self->render_mail( %$data );
+            
+            $self->IS( mail => $data->{'mail'} );
+            
+            $self->send_mail (
+                mail =>
+                {
+                    To      => $data->{'mail'},
+                    Subject => $data->{'reason'} . "at LorCode.",
+                    Data    => $body,
+                }
+            );
+            
+            $self->done('Check your e-mail.');
         }
     );
-}
-
-sub confirm {
-    my ($self, $data) = @_;
-    
-    $self->send (
-        confirm =>
-        {
-            mail => $data->{'mail'},
-            key  => $data->{'key'}
-        }
-    );
-}
-
-sub send {
-    my ($self, $template, $data) = @_;
-
-    my $body = $self->render_mail (
-        controller  => 'mail',
-        action      => $template,
-        %$data
-    );
-    
-    $self->IS( mail => $data->{'mail'} );
-    
-    $self->sendMail (
-        mail =>
-        {
-            To      => $data->{'mail'},
-            Subject => "Hello from LorCode!",
-            Data    => $body,
-        }
-    );
-
-    $self->done('Check your e-mail.');
 }
 
 1;

@@ -1,6 +1,7 @@
 package CodeWars;
 
 use CodeWars::Drawer;
+use MIME::Base64;
 
 use Mojo::Base 'Mojolicious';
 
@@ -40,10 +41,23 @@ sub startup {
     #$r->route('/news/new', id => qr/\d+/)->via('post')
     #    ->to('news#create')->name('news_create');
     
-    # Sessions
+    # Login
     $r->route('/login')->via('get' )->to('auths#form' )->name('auths_form' );
     $r->route('/login')->via('post')->to('auths#login')->name('auths_login');
+
+    # Logout
     $r->route('/logout')->to('auths#logout')->name('auths_logout');
+    
+    # Login by mail:
+    # * Show form
+    $r->route('/login/mail')->via('get')->to('auths#login_by_mail_form')
+        ->name('auths_login_by_mail_form');
+    # * Send mail
+    $r->route('/login/mail')->via('post')->to('auths#login_by_mail_request')
+        ->name('auths_login_by_mail_request');
+    # * Get confirm key
+    $r->route('/login/mail/confirm')->to('auths#login_by_mail')
+        ->name('auths_login_by_mail');
     
     # User
     $r->route('/user/:id', id => qr/\d+/)->via('get')->to('users#read')
@@ -53,12 +67,6 @@ sub startup {
     #$r->route('/user/new')->via('post')->to('users#create')
     #    ->name('users_create');
     
-    # Restore passwords
-    $r->route('/user/forgot')->via('get')->to('users#forgotForm')
-        ->name('users_forgot_form');
-    $r->route('/user/forgot')->via('post')->to('users#forgotRequest')
-        ->name('users_forgot_request');
-    
     # Thread
     $r->route('/thread/:id', id => qr/\d+/)->via('get')->to('threads#read')
         ->name('threads_read');
@@ -66,6 +74,7 @@ sub startup {
     #
     #   Plugins
     #
+    
     $self->plugin( mail => {
         from     => 'no-reply@lorcode.org',
         encoding => 'base64',

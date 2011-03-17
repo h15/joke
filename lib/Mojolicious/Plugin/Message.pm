@@ -18,9 +18,8 @@ sub register {
             $format ||= 'html';
             
             $self->render (
-                controller  => 'message',
-                action      => $template,
-                format      => $format,
+                template => "message/$template",
+                format   => $format,
                 %$data
             );
         }
