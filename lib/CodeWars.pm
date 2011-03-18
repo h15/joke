@@ -30,6 +30,7 @@ sub startup {
     #
     #   Routes
     #
+    
     my $r = $self->routes;
     $r->namespace('CodeWars::Controller');
     
@@ -81,6 +82,14 @@ sub startup {
         type     => 'text/html',
         how      => 'sendmail',
         howargs  => [ '/usr/sbin/sendmail -t' ],
+    });
+    
+    $self->plugin( text => {
+        hosts   => [ qw/lorcode.org git.lorcode.org/ ],
+        protos  => [ qw/http https ftp/ ],
+        exts    => [ qw/html htm txt/ ],
+        imgs    => [ qw/png jpg jpeg bmp/ ],
+        default => 'simple'
     });
     
     $self->plugin( sql => $config->{'db'} );

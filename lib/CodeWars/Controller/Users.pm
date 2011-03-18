@@ -12,7 +12,7 @@ sub read {
     
     if( $self->user->{'id'} != 1                        # not Anonymous
         && $self->stash('id') == $self->user->{'id'}    # and Self
-        || $self->user->is_admin() ) {                   # or  Admin.
+        || $self->user->is_admin() ) {                  # or  Admin.
         
         $self->read_extended(@users);
     }
