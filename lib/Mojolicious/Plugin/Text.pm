@@ -20,13 +20,16 @@ sub register {
         parse => sub {
             my ($self, $text) = @_;
             
-            # Merge exts and imgs
+            # For $self->text->parse->simple constructions.
+            return $self unless $text;
+            
+            # Merge exts and imgs.
             my %merge;
             ++$merge{$_} for @{$conf->{exts}}, @{$conf->{imgs}};
             
             @{$conf->{exts}} = keys %merge;
             
-            # Prepare string
+            # Prepare string.
             $text = "\n#!\n" . $text . "\n#!\n";
             
             #
@@ -34,14 +37,14 @@ sub register {
             my $mode = $conf->{'default'};
             
             #
-            #   Parsing
+            #   Parsing.
             #
             
             while( $text =~ /\G(.*?)\n#!(.*?)\n/gcs ) {
                 ($str, $new_mode) = ( $1, $2 );
                 
                 #
-                #   Select parser
+                #   Select parser.
                 #
                 
                 if( $mode eq 'simple' ) {
@@ -58,11 +61,44 @@ sub register {
             return $result;
         }
     );
+    
+    $app->helper (
+        simple => sub {
+            my ($self, $text) = @_;
+        }
+    );
+    
+    #
+    #   For mimeTex
+    #
+    
+    $app->helper (
+        tex => sub {
+            my $self = shift;
+            my $f = $self->stash('formula');
+            
+            #
+            #   Prepare text
+            #
+            
+            $f = "Wrong Format" if $f !~ /^[.,a-zA-Z0-9+()*{}^=_\-\/\\]*$/;
+            $f =~ s/\\/\\\\/g;
+            $f =~ s/([()])/\\$1/g;
+            $f =~ s/\s+//g;
+            
+            my $file = Digest::MD5::md5_hex( $f ) . '.gif';
+            
+            system("mimetex -e ./public/img/tex/$file $f")
+                unless -r './public/img/tex' . $file;
+            
+            $self->redirect_to('/img/tex/' . $file);
+        }
+    );
 }
 
 #
-#   Link => <a rel class href="Link">
-#   Link to img => <a rel class href="Link"><img src="Link" /></a>
+#   Link => <a rel class href="Link">.
+#   Link to img => <a rel class href="Link"><img src="Link" /></a>.
 #
 sub simple {
     my ($str, $conf) = @_;
@@ -72,7 +108,7 @@ sub simple {
     $str .= "\n";
     
     #
-    #   Define small regexps
+    #   Define small regexps.
     #
     
     my $proto_str = join '|', @$protos;
@@ -83,15 +119,15 @@ sub simple {
     my $hostname = qr![^\s/\\]+?!;
     my $port = qr!:\d+!;
     
-    # /smth many times
+    # /smth many times.
     my $path = qr!(?:/[^\s/\\]+?)+?!;
     
-    # /smth.smth || /smth || /.smth
+    # /smth.smth || /smth || /.smth.
     my $file = qr!/(?:[^\s/\\]+?)?(?:\.($ext_str))?!;
     my $end  = qr/[()\[\]*!^\$@`"':;{}|,><\s]/;
     
     #
-    #   Big regexp
+    #   Big regexp.
     #
     
     $str =~ s {
@@ -99,18 +135,18 @@ sub simple {
     }{
         '<a '
         . (
-            # if $hostname in @$hosts
+            # if $hostname in @$hosts.
             ( grep { $_ eq $2 } @$hosts ) ?
                 'class="internal" ' :
                 'rel="nofollow" class="external" '
         )
         . 'href="' . $1 . '">'
         . (
-            # if $file's $ext in @$img_exts
+            # if $file's $ext in @$img_exts.
             ( grep { $_ eq $3 } @$imgs ) ?
                 # it's image!
                 "<img src=\"$1\" />" :
-                # just url
+                # just url.
                 $2
         )
         . '</a>' . $4;

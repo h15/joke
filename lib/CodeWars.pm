@@ -2,6 +2,7 @@ package CodeWars;
 
 use CodeWars::Drawer;
 use MIME::Base64;
+use Digest::MD5 'md5_hex';
 
 use Mojo::Base 'Mojolicious';
 
@@ -71,6 +72,9 @@ sub startup {
     # Thread
     $r->route('/thread/:id', id => qr/\d+/)->via('get')->to('threads#read')
         ->name('threads_read');
+    
+    $r->route('/tex/:formula')->to( cb => sub { shift->text->parse->tex() })
+        ->name('tex');
     
     #
     #   Plugins

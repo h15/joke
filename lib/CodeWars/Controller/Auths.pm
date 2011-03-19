@@ -1,7 +1,5 @@
 package CodeWars::Controller::Auths;
 
-use Digest::MD5 'md5_hex';
-
 use base 'Mojolicious::Controller';
 
 sub login {
@@ -27,7 +25,7 @@ sub login {
     #   hash != md5( regdate + password + salt )
     my $s = $user->{'regdate'} . $self->param('passwd') . $self->stash('salt');
     
-    if ( $user->{'password'} ne md5_hex($s) ) {
+    if ( $user->{'password'} ne Digest::MD5::md5_hex($s) ) {
         $self->error( "This pair(e-mail and password) doesn't exist!" );
         
         # Don't work without return. I don't know why.
@@ -88,7 +86,7 @@ sub login_by_mail_request {
     # Generate and save confirm key.
     #
     
-    my $confirm_key = md5_hex(rand);
+    my $confirm_key = Digest::MD5::md5_hex(rand);
     
     $self->update(
         "users",
