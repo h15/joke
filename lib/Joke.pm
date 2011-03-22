@@ -1,9 +1,16 @@
+package Joke;
+use Mojo::Base 'Mojolicious';
 
-=pod
+# This method will run once at server start
+sub startup {
+  my $self = shift;
+  
+  $self->plugin('joker');
+}
 
-=head1 What is J:)ke?
+1;
 
-It's a CMS written in Perl. It uses Mojolicious.
+__END__
 
 =head1 COPYRIGHT AND LICENSE
 
@@ -11,12 +18,6 @@ Copyright (C) 2011, Georgy Bazhukov.
 
 This program is free software, you can redistribute it and/or modify it under
 the terms of the Artistic License version 2.0.
-
-=cut
-
-=head1 Post scriptum
-
-I hope, that Joke will give you a lot of fun!
 
 =cut
 
