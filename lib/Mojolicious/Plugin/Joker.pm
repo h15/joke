@@ -19,7 +19,7 @@ sub info {
         author  => 'h15 <georgy.bazhukov@gmail.com>',
         about   => 'Plugin manager.',
         fields  => {},
-        depends => [ qw/data user message/ ],
+        depends => [ qw/Data User Message/ ],
         config  => {
             scan_path => "./Mojolicious/Plugin/"
         }

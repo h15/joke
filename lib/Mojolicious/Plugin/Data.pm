@@ -19,7 +19,7 @@ sub info {
         author  => 'h15 <georgy.bazhukov@gmail.com>',
         about   => 'Data bases\' interface.',
         fields  => {},
-        depends => [],
+        depends => [ qw/Message/ ],
         config  => {
         #
         # Default config. Will be deleted.
@@ -43,12 +43,19 @@ sub info {
 sub register {
     my ( $self, $app ) = @_;
     
+    $app->plugin('message');
+    
     my $data = Mojolicious::Plugin::Data::Data->new( $self->info('config') );
+    
+    $app->error('Cann\'t init data base.') unless $data;
     
     $app->helper(
         # For querys like $self->data->read,
         # where read is a method of Data.
-        data => sub { $data }
+        data => sub {
+            my $self = shift;
+            return $data;
+        }
     );
 }
 
@@ -65,8 +72,12 @@ sub new {
     
     my $class = "Mojolicious::Plugin::Data::" . $conf->{'driver'};
     load $class;
+    my $drv = $class->new( $conf->{'auth'} );
     
-    my $obj = { driver => $class->new( $conf->{'auth'} ) };
+    # If data base driver init failed.
+    return 0 unless $drv;
+    
+    my $obj = { driver => $drv };
     
     bless $obj, $self;
 }
