@@ -7,28 +7,6 @@ use base 'Mojolicious::Plugin';
 
 our $VERSION = '0.1';
 
-#
-#   Info method for Joker plugin manager.
-#
-
-sub info {
-    my ($self, $field) = @_;
-    
-    my $info = {
-        version => $VERSION,
-        author  => 'h15 <georgy.bazhukov@gmail.com>',
-        about   => 'Plugin manager.',
-        fields  => {},
-        depends => [ qw/Data User Message/ ],
-        config  => {
-            scan_path => "./Mojolicious/Plugin/"
-        }
-    };
-    
-    return $info->{$field} if $field;
-    return $info;
-}
-
 sub register {
     my( $self, $app ) = @_;
     
@@ -142,6 +120,10 @@ sub scan {
     
     for my $joke ( @files ) {
         my $info = $self->read_joke($joke);
+        
+        #   Don't read jokes without info.
+        next unless $info;
+        
         $self->stash('jokes')->{ $info->{'name'} } = $info;
     }
 }
