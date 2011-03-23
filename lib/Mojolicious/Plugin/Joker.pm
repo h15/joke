@@ -16,9 +16,9 @@ sub register {
     #   Load core plugins.
     #
 
+    $app->plugin('message');
     $app->plugin('data');
     $app->plugin( 'user' => { id => $session->{'user_id'} } );
-    $app->plugin('message');
     
     #
     #   Joker routes.

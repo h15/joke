@@ -41,13 +41,17 @@ sub new {
 #   CRUD again.
 #
 
+# Params: table, fields?, {where}, order?.
 sub read {
-    my $self = shift;
-    my $table = shift;
+    my ( $self, $table ) = @_;
+    
+    # if input like (table, {where})
+    ( $_[3], $_[2] ) = ( $_[2], '*' ) unless $_[3];
     
     $self->{'db'}->select( $self->{'prefix'} . $table, @_ )->hashes;
 }
-    
+
+# Params: table, {fields}, {where}
 sub update {
     my $self = shift;
     my $table = shift;
@@ -55,6 +59,7 @@ sub update {
     $self->{'db'}->update( $self->{'prefix'} . $table, @_ );
 }
 
+# Params: table, {fields}
 sub create {
     my $self = shift;
     my $table = shift;
@@ -62,6 +67,7 @@ sub create {
     $self->{'db'}->insert( $self->{'prefix'}.$table, @_, {returning => 'id'} );
 }
 
+# Params: table, {where}
 sub delete {
     my $self = shift;
     my $table = shift;
