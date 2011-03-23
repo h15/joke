@@ -62,7 +62,6 @@ sub create {
     $self->{'db'}->insert( $self->{'prefix'}.$table, @_, {returning => 'id'} );
 }
 
-    
 sub delete {
     my $self = shift;
     my $table = shift;
