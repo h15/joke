@@ -91,7 +91,7 @@ sub create {
     return shift->{'driver'}->create(@_);
 }
 
-# Params : (table, {where}).
+# Params : (table, fields?, {where}, order?).
 # Returns: array of hashes.
 sub read {
     return shift->{'driver'}->read(@_);
