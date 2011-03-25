@@ -29,7 +29,7 @@ sub register {
     
     $r->route('/joker')->to('joker#list')->name('joker_list');
     
-    $r->route('/joker/:plugin', plugin => qr/^[a-zA-Z0-9_\-]+$/)->via('get')
+    $r->route('/joker/:plugin')->via('get')
         ->to('joker#read')->name('joker_read');
 	
 	#
@@ -39,9 +39,13 @@ sub register {
 	
 }
 
+1;
+
 package Mojolicious::Plugin::Controller::Joker;
 
 use base 'Mojolicious::Controller';
+
+use Data::Dumper;
 
 # cRud
 sub read {
@@ -49,24 +53,42 @@ sub read {
     
     my $path = $self->param('plugin');
     $path =~ s/::/\//g;
+    $path = "./lib/$path.pm";
+    
+    # If module's file does not exist.
+    return $self->error("Cann't read file $path!") unless -r $path;
     
     # Read joke by file path.
-    my $info = $self->read_joke( $self->info('config')->{'scan_path'} . $path );
+    my $info = $self->read_joke( $path );
+    
+    # 
+    return $self->error( $self->param('plugin')
+        . " does not have info about his self." ) unless $info;
     
     # Add joke to stash
-    $self->stash('jokes')->{ $info->{'name'} } = $info;
+    my $jokes = { $info->{'name'} => $info };
     
-    my @plugins = $self->data->read( plugins => {
-        name => $self->param('plugin')
-    });
+    #my @plugins = $self->data->read( plugins => {
+    #    name => $self->param('plugin')
+    #});
     
     # Add config info from db if joke exists
-    if( exists $self->stash('jokes')->{ $plugins[0]->{'name'} } ) {
-        $self->stash('jokes')
-            ->{ $plugins[0]->{'name'} }->{'config'} = $plugins[0];
-    }
+    #if( exists $jokes->{ $plugins[0]->{'name'} } ) {
+    #    $jokes->{ $plugins[0]->{'name'} }->{'config'} = $plugins[0];
+    #}
     
-    $self->render( template => 'mojolicious/plugin/joker/read.html.ep' );
+    $self->stash( jokes => $jokes );
+    
+    my $DATA = Mojo::Command->new->get_all_data( __PACKAGE__ );
+    
+    $self->content_for(
+        body => $self->render( inline => $DATA->{'read.html.ep'} )
+    );
+    
+    $self->render(
+        inline => $DATA->{'base.html.ep'},
+        title => 'read ' . $info->{'name'}
+    );
 }
 
 #
@@ -76,37 +98,45 @@ sub read {
 sub list {
     my $self = shift;
     
+    my %jokes = $self->scan;
+    
     #
     #   Get config form database and push config to joke if joke exists.
     #   $self->data->read('plugins') returns array of hashes.
     #
     
     for my $plugin ( $self->data->read('plugins') ) {
-        if( exists $self->stash('jokes')->{ $plugin->{'name'} } ) {
-            $self->stash('jokes')->{ $plugin->{'name'} }->{'config'} = $plugin;
+        if( exists $jokes{ $plugin->{'name'} } ) {
+            $jokes{ $plugin->{'name'} }{'config'} = $plugin;
         }
     }
     
-    $self->render( template => 'mojolicious/plugin/joker/list.html.ep' );
+    $self->stash( jokes => \%jokes);
+    
+    my $DATA = Mojo::Command->new->get_all_data( __PACKAGE__ );
+    
+    $self->content_for(
+        body => $self->render( inline => $DATA->{'list.html.ep'} )
+    );
+    
+    $self->render( inline => $DATA->{'base.html.ep'}, title => 'list' );
 }
 
 sub scan {
-    my ($self, $scan_path) = @_;
+    my $self = shift;
     
     #
     #   Recursive get all files from $self->info('config')->{'scan_path'}.
     #
     
-    $scan_path ||= $self->info('config')->{'scan_path'};
-    
-    my @dir = <"$scan_path*">;
+    my @dir = <./lib/Mojolicious/Plugin/*>;
     my @files;
     
     while( @dir ) {
         my $path = pop @dir;
 
         # if file
-        push @files, $path   if -f $path;
+        push @files, $path   if -r $path;
         
         # if directory
         push @dir, <$path/*> if -d $path;
@@ -117,15 +147,19 @@ sub scan {
     #   $self->stash('jokes') will have hash (joke's name is a key)
     #   of hashes (info).
     #
+
+    my %jokes;
     
     for my $joke ( @files ) {
         my $info = $self->read_joke($joke);
         
-        #   Don't read jokes without info.
+        # Don't read jokes without info.
         next unless $info;
         
-        $self->stash('jokes')->{ $info->{'name'} } = $info;
+        $jokes{ $info->{'name'} } = $info;
     }
+    
+    return %jokes;
 }
 
 #
@@ -139,13 +173,23 @@ sub read_joke {
     # Get module name.
     $module = $self->path2module($module);
     
-    Mojo::Loader->load($module);
+    # Needed info.
+    # Dynamic load module.
+    use lib $module;
     
-    # Here should be all needed info.
-    my $info = $module->info();
-    Mojo::Loader->_unload($module);
+    my $obj = bless {}, $module;
+    my $info = $obj->info if defined *{$module . '::info'};
     
-    return $info;
+    no lib $module;
+    
+    # Info can be not defined...
+    if( $info ) {
+        $info->{'name'} = $module;
+        
+        return $info;
+    }
+    
+    return 0;
 }
 
 sub path2module {
@@ -154,56 +198,125 @@ sub path2module {
     my @waypoints = split /[\\\/]/, $path;
     $waypoints[-1] =~ s/\.pm$//i;
     
-    return join('::', @waypoints);
+    # Remove "./lib/" from path.
+    return join('::', @waypoints[2..$#waypoints]);
 }
 
 1;
 
 __DATA__
-@@ mojolicious/plugin/joker/base.html.ep
+@@ base.html.ep
 <!doctype html>
 <html>
     <head>
-        <%= content_for 'header' %>
-        <title>Joker plugin system &rarr; <%= content_for 'title' %></title>
+        %= stylesheet '/css/main.css';
+        <link rel="icon" href="/img/joker/j.png" type="image/x-icon" />
+		<link rel="shortcut icon" href="/img/joker/j.png" type="image/x-icon" />
+		<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+        <title>Joker plugin system &rarr; <%= $title %></title>
     </head>
     <body>
-        <%= content_for 'body' %>
-    </body>
+        <div class=page>
+            %= content_for 'body'
+        </div>
+--> </body>
 </html>
 
-@@ mojolicious/plugin/joker/list.html.ep
-% extends 'mojolicious/plugin/joker/base.html.ep';
-<% content_for header => begin %>
-    list
-<% end %>
-<% content_for header => begin %>
-%   for my $plugin (@$plugins) {
-        <div class="plugin">
+@@ list.html.ep
+% content_for body => begin
+<div class="plugins">
+<h2>Plugin list</h2>
+%   my $jokes = $self->stash('jokes');
+%   for my $plugin (values %$jokes) {
+        <a href="<%= url_for('joker_read', plugin => $plugin->{'name'}) %>">
+        <div class="plugin rounded">
             <%= $plugin->{'name'} %> (<%= $plugin->{'version'} %>)
             <div class="actions">
-                <a class="action config"
+                <a class="action config rounded"
                     href="<%= url_for('joker_read',
                         plugin => $plugin->{'name'}) %>">*</a>
+                <a class="action
 %               if( $plugin->{'active'} ) {
-                    <a class="action on"
-                        href="<%= url_for('joker_update',
-                            plugin => $plugin->{'name'}, do => 'on') %>">on</a>
+                    on
 %               }
 %               else {
-                    <a class="action off"
-                       href="<%= url_for('joker_update',
-                          plugin => $plugin->{'name'}, do => 'off') %>">off</a>
-%               }
-                <a class="action copyright"
+                    off
+%               }                    
+                    rounded" href="<%= url_for('joker_update',
+                        plugin => $plugin->{'name'}, do => 'on') %>">J</a>
+                <a class="action copyright rounded"
                    href="<%= url_for('joker_read',
                      plugin => $plugin->{'name'}, do => 'about') %>">&copy;</a>
             </div>
         </div>
+        </a>
 %   }
-<% end %>
+</div>
+<!-- End of body 
+% end
+
+@@ read1.html.ep
+% content_for body => begin
+%   my $jokes = $self->stash('jokes');
+%   for my $plugin (values %$jokes) {
+%= dumper $plugin->{'version'}
+%   }
+<!-- End of body 
+% end
 
 
+@@ read.html.ep
+% content_for body => begin
+%   my $jokes = $self->stash('jokes');
+%   for my $plugin (values %$jokes) {
+<div class="plugins">
+    <h2><a class="on rounded action" href="<%= url_for('joker_list') %>">J</a> &rarr;
+        <%= $plugin->{'name'} %></h2>
+    <div class="actions">
+        <a class="action config rounded" href="
+            %= url_for('joker_read', plugin => $plugin->{'name'})
+        ">*</a>
+        <a class="action
+    %               if( $plugin->{'active'} ) {
+            on
+    %               }
+    %               else {
+            off
+    %               }                    
+            rounded" href="
+            %= url_for('joker_update', plugin => $plugin->{'name'}, do => 'on')
+        ">J</a>
+        <a class="action copyright rounded" href="
+          %= url_for('joker_read', plugin => $plugin->{'name'}, do => 'about')
+        ">&copy;</a>
+    </div>
+    <table class="simple_table rounded">
+        <tr>
+            <td>version</td>
+            <td><%= $plugin->{'version'} %></td>
+        </tr>
+        <tr>
+            <td>about</td>
+            <td><%= $plugin->{'about'} %></td>
+        </tr>
+        <tr>
+            <td>depends</td>
+            <td>
+% for my $dep ( @{$plugin->{'depends'}} ) {
+<a href="<%= url_for('joker_read', plugin => "Mojolicious::Plugin::$dep")%>
+"><%= $dep %></a>&nbsp;
+% }
+            </td>
+        </tr>
+        <tr>
+            <td>author</td>
+            <td><%= $plugin->{'author'} %></td>
+        </tr>
+    </table>
+</div>
+%   }
+<!-- End of body 
+% end
 
 __END__
 

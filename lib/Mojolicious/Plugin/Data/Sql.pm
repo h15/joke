@@ -43,10 +43,11 @@ sub new {
 
 # Params: table, fields?, {where}, order?.
 sub read {
-    my ( $self, $table ) = @_;
+    my $self = shift;
+    my $table = shift;
     
     # if input like (table, {where})
-    ( $_[3], $_[2] ) = ( $_[2], '*' ) unless $_[3];
+    ( $_[1], $_[0] ) = ( $_[0], '*' ) unless $_[1];
     
     $self->{'db'}->select( $self->{'prefix'} . $table, @_ )->hashes;
 }

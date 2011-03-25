@@ -26,7 +26,7 @@ sub info {
         #
         # Should set this config in some other place...
         #
-            driver => "Sql"
+            driver => "Sql",
             auth   => {
                 host    => 'dbi:mysql:code_wars',
                 user    => 'code_wars',
@@ -43,7 +43,7 @@ sub info {
 sub register {
     my ( $self, $app ) = @_;
     
-    $app->plugin('message');
+    #$app->plugin('message');
     
     my $data = Mojolicious::Plugin::Data::Data->new( $self->info('config') );
     

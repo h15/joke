@@ -1,0 +1,126 @@
+.page {
+	margin:0px auto;
+	width:800px;
+	color:#222;
+	font-family:Sans, Arial;
+}
+
+a {
+    color: #c62;
+}
+
+.post {
+	margin: 5px 0px;
+}
+
+.rounded {
+	padding: 5px;
+	background: #eee;
+	border: 1px solid #ddd;
+	
+	-moz-border-radius: 10px;
+	-webkit-border-radius: 10px;
+	border-radius: 10px;
+	-khtml-border-radius: 10px;
+}
+
+.center {
+    margin: 50px auto;
+}
+
+.date {
+	float: right;
+}
+
+.error {
+    width: 600px;
+    background: #fee;
+    border: 1px solid #fcc;
+    padding: 50px;
+    margin: 50px auto;
+    text-align:center;
+}
+
+.done {
+    width: 600px;
+    background: #efe;
+    border: 1px solid #cfc;
+    padding: 50px;
+    margin: 50px auto;
+    text-align:center;
+}
+
+.simple_table {
+    width:600px;
+}
+
+.simple_table td {
+    padding:2px 5px 2px 5px;
+}
+
+.aligncenter {
+    margin:auto;
+}
+
+.alignright {
+    float:right;
+}
+
+.alignleft {
+    float:left;
+}
+
+body {
+    padding:0px;
+    margin:0px;
+}
+
+img {
+    border:0px;
+}
+
+.plugin {
+    margin-top:5px;
+    padding: 10px;
+}
+
+.actions {
+    float:right;
+}
+
+.plugin a {
+    text-decoration: none;
+    color: #c62;
+}
+
+a.action:hover {
+    background-color:#ddd;
+}
+
+.action {
+    padding:5px 10px 5px 10px;
+}
+
+.plugins {
+    margin:0px auto;
+    width:600px;
+}
+
+.plugins h2 {
+    color:#ccc;
+}
+
+a.on {
+    font-weight:bold;
+    color:darkred;
+    font-family:"Times new roman";
+    text-decoration: none;
+}
+
+a.off {
+    font-weight:bold;
+    color:black;
+    font-family:"Times new roman";
+    text-decoration: none;
+}
+

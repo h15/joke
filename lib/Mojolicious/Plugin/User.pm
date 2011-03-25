@@ -42,7 +42,7 @@ sub register {
     my $id = $session->{'user_id'};
     
     # Anonymous has 1st id.
-    $id = 1 unless $id =~ m/^\d+$/;
+    $id ||= 1;
     
     my $user = Mojolicious::Plugin::User::User->new (
         $app->data->read( users => { id => $id } )
@@ -82,4 +82,15 @@ sub is_admin {
 }
 
 1;
+
+__END__
+
+=head1 COPYRIGHT AND LICENSE
+
+Copyright (C) 2011, Georgy Bazhukov.
+
+This program is free software, you can redistribute it and/or modify it under
+the terms of the Artistic License version 2.0.
+
+=cut
 

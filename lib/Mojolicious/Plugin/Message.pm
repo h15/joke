@@ -47,100 +47,68 @@ sub register {
             $self->msg( done => $format => { message => $message } );
         }
     );
-}
-
-sub msg {
-    # For example: (self, 'error', 'html',
-    # { message => "Die, die, dive with me!" }).
-    my ($self, $template, $format, $data) = @_;
     
-    $format ||= 'html';
+    $app->helper(
+        # Do not use it directly.
+        msg => sub {
+            # For example: (self, 'error', 'html',
+            # { message => "Die, die, dive with me!" }).
+            my ($self, $template, $format, $data) = @_;
+            
+            $format ||= 'html';
     
-    $self->render (
-        template => "mojolicious/plugin/message/$template",
-        format   => $format,
-        %$data
+            my $DATA = Mojo::Command->new->get_all_data( __PACKAGE__ );
+            
+            $self->stash( %$data );
+            
+            $self->content_for(
+                body => $self->render(
+                    inline => $DATA->{$template . '.html.ep'}
+                )
+            );
+            
+            $self->render(
+                inline => $DATA->{'base.html.ep'},
+                title => $template
+            );
+            
+            return;
+        }
     );
 }
 
 1;
 
 __DATA__
-@@ mojolicious/plugin/message/style.css
-.page {
-	margin:0px auto;
-	width:800px;
-	color:#222;
-	font-family:Sans, Arial;
-}
-.error {
-    width: 600px;
-    background: #fee;
-    border: 1px solid #fcc;
-    padding: 50px;
-    margin: 50px auto;
-    text-align:center;
-}
-.done {
-    width: 600px;
-    background: #efe;
-    border: 1px solid #cfc;
-    padding: 50px;
-    margin: 50px auto;
-    text-align:center;
-}
-.rounded {
-	padding: 5px;
-	background: #eee;
-	border: 1px solid #ddd;
-//
-	-moz-border-radius: 10px;
-	-webkit-border-radius: 10px;
-	border-radius: 10px;
-	-khtml-border-radius: 10px;
-}
-.center {
-    margin: 50px auto;
-}
-
-@@ mojolicious/plugin/message/base.html.ep
+@@ base.html.ep
 <!doctype html>
 <html>
     <head>
-        <%= content_for 'header' %>
-%= stylesheet 'mojolicious/plugin/message/style.css'
-        <title><%= content_for 'title' %></title>
+%= stylesheet '/css/main.css';
+        <title>Joker &rarr; <%= $title %></title>
     </head>
     <body>
         <%= content_for 'body' %>
-    </body>
+--> </body>
 </html>
 
-@@ mojolicious/plugin/message/error.html.ep
-% extends 'mojolicious/plugin/message/base.html.ep';
-<% content_for title => begin %>
-    <%=l "Error!" %>
-<% end %>
-<% content_for body => begin %>
+@@ error.html.ep
+% content_for body => begin
     <div class=page>
         <div class="rounded error">
-            <%=l $message %>
+            <%= $self->stash('message') %>
         </div>
-    </div>
-<% end %>
+    </div><!--
+% end
 
-@@ mojolicious/plugin/message/done.html.ep
-% extends 'mojolicious/plugin/message/base.html.ep';
-<% content_for title => begin %>
-    <%=l "Done!" %>
-<% end %>
-<% content_for body => begin %>
+@@ done.html.ep
+% content_for body => begin
     <div class=page>
         <div class="rounded done">
-            <%=l $message %>
+            <%= $message %>
         </div>
-    </div>
-<% end %>
+    </div><!--
+% end
 
 __END__
 
