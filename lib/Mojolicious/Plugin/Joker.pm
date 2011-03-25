@@ -29,8 +29,8 @@ sub register {
     
     $r->route('/joker')->to('joker#list')->name('joker_list');
     
-    $r->route('/joker/:plugin')->via('get')
-        ->to('joker#read')->name('joker_read');
+    $r->route('/joker/:plugin')->via('get')->to('joker#read')
+        ->name('joker_read');
 	
 	#
 	#   Helpers.
@@ -42,16 +42,21 @@ sub register {
         html_hash_tree => sub {
             my ( $self, $config ) = @_;
             
-            # It's leaf of tree.
-            unless ( ref $config ) {
-                return "<input value='$config' class='changeable' disabled>";
-            }
-            
             my $ret = "<table>";
             
             for my $k ( keys %$config ) {
                 $ret .= "<tr><td>$k</td><td name='$k'>";
-                $ret .= $self->html_hash_tree( $config->{$k} );
+                
+                # Branch or leaf?
+                unless ( ref $config->{$k} ) {
+                    $ret .= "<input value='" . $config->{$k}
+                         . "' class='changeable' name='$k-input' "
+                         . "onClick=\"click_input('$k-input')\">";
+                }
+                else {
+                    $ret .= $self->html_hash_tree( $config->{$k} );
+                }
+                
                 $ret .= "</td></tr>";
             }
             
@@ -237,7 +242,88 @@ __DATA__
 <!doctype html>
 <html>
     <head>
-        %= stylesheet '/css/main.css';
+        <style>
+.page {
+	margin:0px auto;
+	width:800px;
+	color:#222;
+	font-family:Sans, Arial;
+}
+a {
+    color: #c62;
+}
+.rounded {
+	padding: 5px;
+	background: #eee;
+	border: 1px solid #ddd;
+	-moz-border-radius: 10px;
+	-webkit-border-radius: 10px;
+	border-radius: 10px;
+	-khtml-border-radius: 10px;
+}
+.simple_table {
+    border:0px;
+    //width:600px;
+}
+.simple_table td {
+    vertical-align: top;
+    padding:2px 5px 2px 5px;
+}
+td.changeable {
+    border:1px solid #ddd;
+}
+.alignright {
+    float:right;
+}
+body {
+    padding:0px;
+    margin:0px;
+}
+img {
+    border:0px;
+}
+.plugin {
+    margin-top:5px;
+    padding: 10px;
+}
+.actions {
+    float:right;
+}
+.plugin a {
+    text-decoration: none;
+    color: #c62;
+}
+a.action:hover {
+    background-color:#ddd;
+}
+.action {
+    padding:5px 10px 5px 10px;
+}
+.plugins {
+    margin:0px auto;
+    width:600px;
+}
+.plugins h2 {
+    color:#ccc;
+}
+a.on {
+    font-weight:bold;
+    color:darkred;
+    font-family:"Times new roman";
+    text-decoration: none;
+}
+a.off {
+    font-weight:bold;
+    color:#888;
+    font-family:"Times new roman";
+    text-decoration: none;
+}
+.changeable {
+    border:1px solid #ddd;
+    background:#eee;
+    color: #222;
+}
+        </style>
         <link rel="icon" href="/img/joker/j.png" type="image/x-icon" />
 		<link rel="shortcut icon" href="/img/joker/j.png" type="image/x-icon" />
 		<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
@@ -282,16 +368,6 @@ __DATA__
 </div>
 <!-- End of body 
 % end
-
-@@ read1.html.ep
-% content_for body => begin
-%   my $jokes = $self->stash('jokes');
-%   for my $plugin (values %$jokes) {
-%= dumper $plugin->{'version'}
-%   }
-<!-- End of body 
-% end
-
 
 @@ read.html.ep
 % content_for body => begin
@@ -349,7 +425,7 @@ __DATA__
 <form action="<%= url_for('joker_update', plugin => $plugin->{'name'}) %>"
     method=POST>
     %== html_hash_tree( $plugin->{'config'} )
-    <input type="submit" class="alignright" disabled>
+    <input type="submit" class="alignright">
 </form>
             </td>
         </tr>
