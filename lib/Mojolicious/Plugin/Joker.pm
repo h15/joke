@@ -33,6 +33,34 @@ sub register {
         ->to('joker#read')->name('joker_read');
 	
 	#
+	#   Helpers.
+	#
+	
+	# Recursive build html tables for config structure. Quick and dirty...
+    $app->helper(
+        # Show xmas^W config tree with changeable values.
+        html_hash_tree => sub {
+            my ( $self, $config ) = @_;
+            
+            # It's leaf of tree.
+            unless ( ref $config ) {
+                return "<input value='$config' class='changeable' disabled>";
+            }
+            
+            my $ret = "<table>";
+            
+            for my $k ( keys %$config ) {
+                $ret .= "<tr><td>$k</td><td name='$k'>";
+                $ret .= $self->html_hash_tree( $config->{$k} );
+                $ret .= "</td></tr>";
+            }
+            
+            $ret .= "</table>";
+            return $ret;
+        }
+    );
+    
+	#
 	#   Load active plugins.
 	#
 	
@@ -68,14 +96,14 @@ sub read {
     # Add joke to stash
     my $jokes = { $info->{'name'} => $info };
     
-    #my @plugins = $self->data->read( plugins => {
-    #    name => $self->param('plugin')
-    #});
+    my @plugins = $self->data->read( plugins => {
+        name => $self->param('plugin')
+    });
     
     # Add config info from db if joke exists
-    #if( exists $jokes->{ $plugins[0]->{'name'} } ) {
-    #    $jokes->{ $plugins[0]->{'name'} }->{'config'} = $plugins[0];
-    #}
+    if( exists $jokes->{ $plugins[0]->{'name'} } ) {
+        $jokes->{ $plugins[0]->{'name'} }->{'config'} = $plugins[0];
+    }
     
     $self->stash( jokes => $jokes );
     
@@ -87,7 +115,7 @@ sub read {
     
     $self->render(
         inline => $DATA->{'base.html.ep'},
-        title => 'read ' . $info->{'name'}
+        title => $info->{'name'}
     );
 }
 
@@ -290,7 +318,11 @@ __DATA__
           %= url_for('joker_read', plugin => $plugin->{'name'}, do => 'about')
         ">&copy;</a>
     </div>
-    <table class="simple_table rounded">
+%#
+%#          PLUGIN's INFO
+%#
+<div class="plugins rounded">
+    <table class="simple_table">
         <tr>
             <td>version</td>
             <td><%= $plugin->{'version'} %></td>
@@ -302,6 +334,9 @@ __DATA__
         <tr>
             <td>depends</td>
             <td>
+%#
+%#          LIST OF DEPS
+%#
 % for my $dep ( @{$plugin->{'depends'}} ) {
 <a href="<%= url_for('joker_read', plugin => "Mojolicious::Plugin::$dep")%>
 "><%= $dep %></a>&nbsp;
@@ -309,10 +344,21 @@ __DATA__
             </td>
         </tr>
         <tr>
+            <td>config</td>
+            <td>
+<form action="<%= url_for('joker_update', plugin => $plugin->{'name'}) %>"
+    method=POST>
+    %== html_hash_tree( $plugin->{'config'} )
+    <input type="submit" class="alignright" disabled>
+</form>
+            </td>
+        </tr>
+        <tr>
             <td>author</td>
             <td><%= $plugin->{'author'} %></td>
         </tr>
     </table>
+</div>
 </div>
 %   }
 <!-- End of body 

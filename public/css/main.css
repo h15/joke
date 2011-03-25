@@ -51,11 +51,17 @@ a {
 }
 
 .simple_table {
-    width:600px;
+    border:0px;
+    //width:600px;
 }
 
 .simple_table td {
+    vertical-align: top;
     padding:2px 5px 2px 5px;
+}
+
+td.changeable {
+    border:1px solid #ddd;
 }
 
 .aligncenter {
@@ -119,8 +125,13 @@ a.on {
 
 a.off {
     font-weight:bold;
-    color:black;
+    color:#888;
     font-family:"Times new roman";
     text-decoration: none;
 }
 
+.changeable {
+    border:1px solid #ddd;
+    background:#eee;
+    color: #222;
+}
