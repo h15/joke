@@ -27,10 +27,15 @@ sub register {
     my $r = $app->routes;
     $r->namespace('Mojolicious::Plugin::Controller');
     
+    # List of plugins, which I found in ./lib/Mojolicious/Plugin.
     $r->route('/joker')->to('joker#list')->name('joker_list');
-    
+
+    # Show one plugin.
     $r->route('/joker/:plugin')->via('get')->to('joker#read')
         ->name('joker_read');
+    # Change config.
+	$r->route('/joker/:plugin/:action')->via('post')->to('joker#update')
+        ->name('joker_update');
 	
 	#
 	#   Helpers.
@@ -153,6 +158,10 @@ sub list {
     );
     
     $self->render( inline => $DATA->{'base.html.ep'}, title => 'list' );
+}
+
+sub update {
+    
 }
 
 sub scan {
@@ -324,8 +333,8 @@ a.off {
     color: #222;
 }
         </style>
-        <link rel="icon" href="/img/joker/j.png" type="image/x-icon" />
-		<link rel="shortcut icon" href="/img/joker/j.png" type="image/x-icon" />
+        <link rel="icon" href="/img/joker/j64.png" type="image/x-icon" />
+		<link rel="shortcut icon" href="/img/joker/j64.png" type="image/x-icon" />
 		<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
         <title>Joker plugin system &rarr; <%= $title %></title>
     </head>
@@ -342,25 +351,14 @@ a.off {
 <h2>Plugin list</h2>
 %   my $jokes = $self->stash('jokes');
 %   for my $plugin (values %$jokes) {
+%       my ($stat, $do) = $plugin->{'active'} ? ('on','off') : ('off','on');
         <a href="<%= url_for('joker_read', plugin => $plugin->{'name'}) %>">
         <div class="plugin rounded">
             <%= $plugin->{'name'} %> (<%= $plugin->{'version'} %>)
             <div class="actions">
-                <a class="action config rounded"
-                    href="<%= url_for('joker_read',
-                        plugin => $plugin->{'name'}) %>">*</a>
-                <a class="action
-%               if( $plugin->{'active'} ) {
-                    on
-%               }
-%               else {
-                    off
-%               }                    
+                <a class="action <%= $stat %>
                     rounded" href="<%= url_for('joker_update',
-                        plugin => $plugin->{'name'}, do => 'on') %>">J</a>
-                <a class="action copyright rounded"
-                   href="<%= url_for('joker_read',
-                     plugin => $plugin->{'name'}, do => 'about') %>">&copy;</a>
+                        plugin => $plugin->{'name'}, action => $do) %>">J</a>
             </div>
         </div>
         </a>
@@ -373,26 +371,14 @@ a.off {
 % content_for body => begin
 %   my $jokes = $self->stash('jokes');
 %   for my $plugin (values %$jokes) {
+%       my ($stat, $do) = $plugin->{'active'} ? ('on','off') : ('off','on');
 <div class="plugins">
     <h2><a class="on rounded action" href="<%= url_for('joker_list') %>">J</a> &rarr;
         <%= $plugin->{'name'} %></h2>
     <div class="actions">
-        <a class="action config rounded" href="
-            %= url_for('joker_read', plugin => $plugin->{'name'})
-        ">*</a>
-        <a class="action
-    %               if( $plugin->{'active'} ) {
-            on
-    %               }
-    %               else {
-            off
-    %               }                    
-            rounded" href="
-            %= url_for('joker_update', plugin => $plugin->{'name'}, do => 'on')
+        <a class="action <%= $stat %> rounded" href="
+        %= url_for('joker_update', plugin => $plugin->{'name'}, action => $do)
         ">J</a>
-        <a class="action copyright rounded" href="
-          %= url_for('joker_read', plugin => $plugin->{'name'}, do => 'about')
-        ">&copy;</a>
     </div>
 %#
 %#          PLUGIN's INFO
