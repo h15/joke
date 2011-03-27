@@ -48,6 +48,9 @@ sub register {
         $app->data->read( users => { id => $id } )
     );
     
+    # Cann't init user.
+    #$self->error("User with this id does not exist.") unless ref($user);
+    
     $app->helper (
         user => sub {
             return $user;
@@ -62,7 +65,7 @@ package Mojolicious::Plugin::User::User;
 sub new {
     my ($self, @users) = @_;
     
-    $self->error("User with this id does not exist.") if $#users;
+    return 0 if $#users;
 
     bless $users[0], $self;
 }

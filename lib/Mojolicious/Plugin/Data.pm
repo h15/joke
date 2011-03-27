@@ -28,10 +28,10 @@ sub info {
         #
             driver => "Sql",
             auth   => {
-                host    => 'dbi:mysql:code_wars',
-                user    => 'code_wars',
-                passwd  => 'SCKM4FJS57BRL49x',
-                prefix  => 'forum__',
+                host    => 'dbi:mysql:joker',
+                user    => 'joker',
+                passwd  => 'fSZs4hCZusneJcbB',
+                prefix  => 'joke__',
             }
         }
     };

@@ -41,25 +41,27 @@ sub register {
 	#   Helpers.
 	#
 	
-	# Recursive build html tables for config structure. Quick and dirty...
+	# Recursive build html tables for config structure. Quick and dirty.
     $app->helper(
         # Show xmas^W config tree with changeable values.
         html_hash_tree => sub {
-            my ( $self, $config ) = @_;
+            my ( $self, $config, $parent ) = @_;
+            
+            $parent ||= '';
             
             my $ret = "<table>";
             
             for my $k ( keys %$config ) {
-                $ret .= "<tr><td>$k</td><td name='$k'>";
+                $ret .= "<tr><td>$k</td><td name='$parent-$k'>";
                 
                 # Branch or leaf?
                 unless ( ref $config->{$k} ) {
                     $ret .= "<input value='" . $config->{$k}
-                         . "' class='changeable' name='$k-input' "
-                         . "onClick=\"click_input('$k-input')\">";
+                         . "' class='changeable' name='$parent-$k-input'>";
                 }
                 else {
-                    $ret .= $self->html_hash_tree( $config->{$k} );
+                    $ret .= $self->html_hash_tree(
+                        $config->{$k}, "$parent-$k" );
                 }
                 
                 $ret .= "</td></tr>";
@@ -80,10 +82,12 @@ sub register {
 1;
 
 package Mojolicious::Plugin::Controller::Joker;
+use Storable qw/freeze thaw/;
+use Data::Dumper;
 
 use base 'Mojolicious::Controller';
 
-use Data::Dumper;
+our $PLUG_PATH = './lib/Mojolicious/Plugin/';
 
 # cRud
 sub read {
@@ -115,18 +119,12 @@ sub read {
         $jokes->{ $plugins[0]->{'name'} }->{'config'} = $plugins[0];
     }
     
-    $self->stash( jokes => $jokes );
-    
-    my $DATA = Mojo::Command->new->get_all_data( __PACKAGE__ );
-    
-    $self->content_for(
-        body => $self->render( inline => $DATA->{'read.html.ep'} )
-    );
-    
-    $self->render(
-        inline => $DATA->{'base.html.ep'},
+    $self->stash(
+        jokes => $jokes,
         title => $info->{'name'}
     );
+
+    $self->data_render('read');
 }
 
 #
@@ -149,29 +147,85 @@ sub list {
         }
     }
     
-    $self->stash( jokes => \%jokes);
-    
+    $self->stash(
+        jokes => \%jokes,
+        title => 'list'
+    );
+
+    $self->data_render('list');
+}
+
+#
+#   Render from __DATA__ section.
+#
+
+sub data_render {
+    my ( $self, $template ) = @_;
+
     my $DATA = Mojo::Command->new->get_all_data( __PACKAGE__ );
     
     $self->content_for(
-        body => $self->render( inline => $DATA->{'list.html.ep'} )
+        body => $self->render( inline => $DATA->{"$template.html.ep"} )
     );
     
-    $self->render( inline => $DATA->{'base.html.ep'}, title => 'list' );
+    $self->render( inline => $DATA->{'base.html.ep'} );
 }
 
 sub update {
+    my $self = shift;
     
+    my $info = $self->read_joke( './lib/' . $self->param('plugin') );
+    
+    #   Make new config from params.
+    #   Add dump of new config into data base.
+    
+    upd_conf( $info->{'config'} );
+    
+    #
+    #   TODO: insert if row does not exist.
+    #
+
+    # Update and print "ok" or "cann't".
+    if ( $self->data->update( plugins =>
+            # fields
+            { config => freeze( $info->{'config'} ) },
+            # where
+            { name   => $self->param('plugin') }
+    ) ) {
+        
+        $self->done('Plugin config updated!');
+    }
+    else {
+        $self->error('Cann\'t update config!');
+    }
+    
+    #   Recursive make new config.
+    
+    sub upd_conf {
+        my ( $conf, $parent ) = @_;
+        
+        $parent ||= '';
+        
+        for my $k ( keys %$conf ) {
+            unless ( ref $conf->{$k} ) {
+                # Perl rocks!
+                $conf->{$k} = $self->param("$parent-$k-input");
+            }
+            else {
+                upd_conf( $conf->{$k}, "$parent-$k" );
+            }
+        }
+    }
 }
 
 sub scan {
     my $self = shift;
     
     #
-    #   Recursive get all files from $self->info('config')->{'scan_path'}.
+    # Recursive get all files from $self->info('config')->{'scan_path'}.
     #
     
-    my @dir = <./lib/Mojolicious/Plugin/*>;
+    my @dir = <$PLUG_PATH*>;
     my @files;
     
     while( @dir ) {
@@ -210,10 +264,10 @@ sub scan {
 
 sub read_joke {
     # Get path to module.
-    my ($self, $module) = @_;
+    my ( $self, $module ) = @_;
     
     # Get module name.
-    $module = $self->path2module($module);
+    $module = path2module($module);
     
     # Needed info.
     # Dynamic load module.
@@ -235,7 +289,7 @@ sub read_joke {
 }
 
 sub path2module {
-    my ($self, $path) = @_;
+    my $path = shift;
     
     my @waypoints = split /[\\\/]/, $path;
     $waypoints[-1] =~ s/\.pm$//i;
@@ -329,7 +383,7 @@ a.off {
 }
 .changeable {
     border:1px solid #ddd;
-    background:#eee;
+    background:#fafafa;
     color: #222;
 }
         </style>
@@ -344,6 +398,11 @@ a.off {
         </div>
 --> </body>
 </html>
+
+@@ update.html.ep
+% content_for body => begin
+%= dumper $self->stash('config');
+% end
 
 @@ list.html.ep
 % content_for body => begin
@@ -427,6 +486,13 @@ a.off {
 % end
 
 __END__
+
+=head1 Data Base Struct
+
+=head2 Plugin table
+
+    UNIC varchar| Binary    | BLOB
+    plugin_name | is_active | config
 
 =head1 COPYRIGHT AND LICENSE
 
