@@ -5,6 +5,8 @@ package Mojolicious::Plugin::Joker;
 
 use base 'Mojolicious::Plugin';
 
+use Storable 'thaw';
+
 our $VERSION = '0.1';
 
 sub register {
@@ -34,9 +36,27 @@ sub register {
     $r->route('/joker/:plugin')->via('get')->to('joker#read')
         ->name('joker_read');
     # Change config.
-	$r->route('/joker/:plugin/:action')->via('post')->to('joker#update')
+	$r->route('/joker/:plugin')->via('post')->to('joker#update')
         ->name('joker_update');
+    # On / Off
+    $r->route('/joker/:turn/:plugin')->to('joker#turn')->name('joker_turn');
 	
+    #
+    #   Activate module if is_active.
+    #
+    
+    my @plugins = $app->data->read (
+        plugins => { is_active => 1 }
+    );
+    
+    for my $plugin ( @plugins ) {
+        # Hardcoded!!!
+        # 21 - it's a length of "Mojolicious::Plugin::".
+        # Should be fixed.
+        $plugin->{'id'} = substr $plugin->{'id'}, 21;
+        $app->plugin( lc $plugin->{'id'} );
+    }
+    
 	#
 	#   Helpers.
 	#
@@ -70,13 +90,7 @@ sub register {
             $ret .= "</table>";
             return $ret;
         }
-    );
-    
-	#
-	#   Load active plugins.
-	#
-	
-	
+    );	
 }
 
 1;
@@ -103,20 +117,23 @@ sub read {
     # Read joke by file path.
     my $info = $self->read_joke( $path );
     
-    # 
+    # If module has not info.
     return $self->error( $self->param('plugin')
         . " does not have info about his self." ) unless $info;
     
-    # Add joke to stash
+    #
     my $jokes = { $info->{'name'} => $info };
     
     my @plugins = $self->data->read( plugins => {
-        name => $self->param('plugin')
+        id => $self->param('plugin')
     });
     
     # Add config info from db if joke exists
-    if( exists $jokes->{ $plugins[0]->{'name'} } ) {
-        $jokes->{ $plugins[0]->{'name'} }->{'config'} = $plugins[0];
+    if ( exists $jokes->{ $plugins[0]{'id'} } ) {
+        $jokes->{ $plugins[0]{'id'} }->{'is_active'} =
+            $plugins[0]{'is_active'};
+        $jokes->{ $plugins[0]{'id'} }->{'config'} = thaw $plugins[0]{'config'} 
+            if length $plugins[0]{'config'};
     }
     
     $self->stash(
@@ -142,8 +159,10 @@ sub list {
     #
     
     for my $plugin ( $self->data->read('plugins') ) {
-        if( exists $jokes{ $plugin->{'name'} } ) {
-            $jokes{ $plugin->{'name'} }{'config'} = $plugin;
+        if( exists $jokes{ $plugin->{'id'} } ) {
+            $jokes{ $plugin->{'id'} }->{'is_active'} = $plugin->{'is_active'};
+            $jokes{ $plugin->{'id'} }->{'config'} = thaw $plugin->{'config'}
+                if length $plugin->{'config'};
         }
     }
     
@@ -181,23 +200,32 @@ sub update {
     
     upd_conf( $info->{'config'} );
     
-    #
-    #   TODO: insert if row does not exist.
-    #
 
-    # Update and print "ok" or "cann't".
-    if ( $self->data->update( plugins =>
+    # Insert if row does not exist.
+    my @plugins = $self->data->read( plugins =>
+        { id => $self->param('plugin') }
+    );
+
+    unless ( $#plugins ) {
+        # Update and print "ok" or "cann't".
+        $self->data->update( plugins =>
             # fields
             { config => freeze( $info->{'config'} ) },
             # where
-            { name   => $self->param('plugin') }
-    ) ) {
-        
-        $self->done('Plugin config updated!');
+            { id => $self->param('plugin') }
+        );
     }
     else {
-        $self->error('Cann\'t update config!');
+        $self->data->create( plugins =>
+            {
+                id => $self->param('plugin'),
+                is_active => 0,
+                config => freeze( $info->{'config'} )
+            }
+        );
     }
+        
+    $self->done('Plugin config updated!');
     
     #   Recursive make new config.
     
@@ -216,6 +244,31 @@ sub update {
             }
         }
     }
+}
+
+sub turn {
+    my $self = shift;
+
+    my @plugins = $self->data->read (
+        plugins => { id => $self->param('plugin') }
+    );
+
+    unless ( $#plugins ) {
+        $self->data->update( plugins =>
+            { is_active => 1 },
+            { id => $self->param('plugin') }
+        );
+    }
+    else {
+        $self->data->create( plugins =>
+            {
+                id => $self->param('plugin'),
+                is_active => 1
+            }
+        );
+    }
+
+    $self->done( 'Plugin is turning ' . $self->param('turn') );
 }
 
 sub scan {
@@ -371,13 +424,13 @@ a.action:hover {
 }
 a.on {
     font-weight:bold;
-    color:darkred;
+    color:#a00;
     font-family:"Times new roman";
     text-decoration: none;
 }
 a.off {
     font-weight:bold;
-    color:#888;
+    color:#ccc;
     font-family:"Times new roman";
     text-decoration: none;
 }
@@ -410,14 +463,14 @@ a.off {
 <h2>Plugin list</h2>
 %   my $jokes = $self->stash('jokes');
 %   for my $plugin (values %$jokes) {
-%       my ($stat, $do) = $plugin->{'active'} ? ('on','off') : ('off','on');
+%       my ($stat, $do) = $plugin->{'is_active'} ? ('on','off') : ('off','on');
         <a href="<%= url_for('joker_read', plugin => $plugin->{'name'}) %>">
         <div class="plugin rounded">
             <%= $plugin->{'name'} %> (<%= $plugin->{'version'} %>)
             <div class="actions">
                 <a class="action <%= $stat %>
-                    rounded" href="<%= url_for('joker_update',
-                        plugin => $plugin->{'name'}, action => $do) %>">J</a>
+                    rounded" href="<%= url_for('joker_turn',
+                        plugin => $plugin->{'name'}, turn => $do) %>">J</a>
             </div>
         </div>
         </a>
@@ -430,13 +483,13 @@ a.off {
 % content_for body => begin
 %   my $jokes = $self->stash('jokes');
 %   for my $plugin (values %$jokes) {
-%       my ($stat, $do) = $plugin->{'active'} ? ('on','off') : ('off','on');
+%       my ($stat, $do) = $plugin->{'is_active'} ? ('on','off') : ('off','on');
 <div class="plugins">
     <h2><a class="on rounded action" href="<%= url_for('joker_list') %>">J</a> &rarr;
         <%= $plugin->{'name'} %></h2>
     <div class="actions">
         <a class="action <%= $stat %> rounded" href="
-        %= url_for('joker_update', plugin => $plugin->{'name'}, action => $do)
+        %= url_for('joker_turn', plugin => $plugin->{'name'}, turn => $do)
         ">J</a>
     </div>
 %#
@@ -492,7 +545,7 @@ __END__
 =head2 Plugin table
 
     UNIC varchar| Binary    | BLOB
-    plugin_name | is_active | config
+    id          | is_active | config
 
 =head1 COPYRIGHT AND LICENSE
 

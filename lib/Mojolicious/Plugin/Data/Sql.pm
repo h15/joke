@@ -65,7 +65,7 @@ sub create {
     my $self = shift;
     my $table = shift;
             
-    $self->{'db'}->insert( $self->{'prefix'}.$table, @_, {returning => 'id'} );
+    $self->{'db'}->insert( $self->{'prefix'}.$table, @_ );
 }
 
 # Params: table, {where}
