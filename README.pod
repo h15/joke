@@ -15,6 +15,17 @@ Run in joke's root directory
 
     sudo -s 'curl -L cpanmin.us | perl - Mojolicious'
 
+=head1 Struct
+
+               .------------.
+    Joke ----> | Joker      |--> Access --> PluginManager
+               | |          |           `-> OtherMods
+               | |          |
+               | |-> Msg  --|--> done|error
+               | |-> Data --|--> driver ----> DataBase
+               | `-> User --|--> auth
+               '------------'
+
 =head1 COPYRIGHT AND LICENSE
 
 Copyright (C) 2011, Georgy Bazhukov.
