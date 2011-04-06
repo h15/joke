@@ -1,115 +1,19 @@
 use strict;
 use warnings;
 
-package Mojolicious::Plugin::Joker;
-
-use base 'Mojolicious::Plugin';
-
-use Storable 'thaw';
-
-our $VERSION = '0.1';
-
-sub register {
-    my( $self, $app ) = @_;
-    
-    my $session = $app->sessions;
-    
-    #
-    #   Load core plugins.
-    #
-
-    $app->plugin('message');
-    $app->plugin('data');
-    $app->plugin( 'user' => { id => $session->{'user_id'} } );
-    
-    #
-    #   Joker routes.
-    #
-    
-    my $r = $app->routes;
-    $r->namespace('Mojolicious::Plugin::Controller');
-    
-    # List of plugins, which I found in ./lib/Mojolicious/Plugin.
-    $r->route('/joker')->to('joker#list')->name('joker_list');
-
-    # Show one plugin.
-    $r->route('/joker/:plugin')->via('get')->to('joker#read')
-        ->name('joker_read');
-    # Change config.
-	$r->route('/joker/:plugin')->via('post')->to('joker#update')
-        ->name('joker_update');
-    # On / Off
-    $r->route('/joker/:turn/:plugin')->to('joker#turn')->name('joker_turn');
-	
-    #
-    #   Activate module if is_active.
-    #
-    
-    my @plugins = $app->data->read (
-        plugins => { is_active => 1 }
-    );
-    
-    for my $plugin ( @plugins ) {
-        # Hardcoded!!!
-        # 21 - it's a length of "Mojolicious::Plugin::".
-        # Should be fixed.
-        $plugin->{'id'} = substr $plugin->{'id'}, 21;
-        $app->plugin( lc $plugin->{'id'} );
-    }
-    
-	#
-	#   Helpers.
-	#
-	
-	# Recursive build html tables for config structure. Quick and dirty.
-    $app->helper(
-        # Show xmas^W config tree with changeable values.
-        html_hash_tree => sub {
-            my ( $self, $config, $parent ) = @_;
-            
-            $parent ||= '';
-            
-            my $ret = "<table>";
-            
-            for my $k ( keys %$config ) {
-                $ret .= "<tr><td>$k</td><td name='$parent-$k'>";
-                
-                # Branch or leaf?
-                unless ( ref $config->{$k} ) {
-                    $ret .= "<input value='" . $config->{$k}
-                         . "' class='changeable' name='$parent-$k-input'>";
-                }
-                else {
-                    $ret .= $self->html_hash_tree(
-                        $config->{$k}, "$parent-$k" );
-                }
-                
-                $ret .= "</td></tr>";
-            }
-            
-            $ret .= "</table>";
-            return $ret;
-        }
-    );	
-}
-
-1;
-
 package Mojolicious::Plugin::Controller::Joker;
 use Storable qw/freeze thaw/;
-use Data::Dumper;
 
 use base 'Mojolicious::Controller';
 
-our $PLUG_PATH = './lib/Mojolicious/Plugin/';
+our $ROOT = './lib/Mojolicious/Plugin/';
 
-# cRud
 sub read {
     my $self = shift;
     
     my $path = $self->param('plugin');
     $path =~ s/::/\//g;
-    $path = "./lib/$path.pm";
+    $path = "$ROOT$path.pm";
     
     # If module's file does not exist.
     return $self->error("Cann't read file $path!") unless -r $path;
@@ -118,30 +22,23 @@ sub read {
     my $info = $self->read_joke( $path );
     
     # If module has not info.
-    return $self->error( $self->param('plugin')
-        . " does not have info about his self." ) unless $info;
+    return $self->error("$path doesn't have info.") unless $info;
     
-    #
-    my $jokes = { $info->{'name'} => $info };
+    # Get plugin's info form db by ID.
+    my $plugin = [
+        $self->data->read( plugins => { id => $self->param('plugin') } )
+    ]->[0];
     
-    my @plugins = $self->data->read( plugins => {
-        id => $self->param('plugin')
-    });
-    
-    # Add config info from db if joke exists
-    if ( exists $jokes->{ $plugins[0]{'id'} } ) {
-        $jokes->{ $plugins[0]{'id'} }->{'is_active'} =
-            $plugins[0]{'is_active'};
-        $jokes->{ $plugins[0]{'id'} }->{'config'} = thaw $plugins[0]{'config'} 
-            if length $plugins[0]{'config'};
-    }
+    $info->{'state'} = $plugin->{'state'};
+    # Replace default config if it's defined in db.
+    $info->{'config'} = thaw $plugin->{'config'} if length $plugin->{'config'};
     
     $self->stash(
-        jokes => $jokes,
+        jokes => $info,
         title => $info->{'name'}
     );
 
-    $self->data_render('read');
+    $self->render_data_section('read');
 }
 
 #
@@ -153,14 +50,12 @@ sub list {
     
     my %jokes = $self->scan;
     
-    #
-    #   Get config form database and push config to joke if joke exists.
-    #   $self->data->read('plugins') returns array of hashes.
-    #
+    # Get config form database and push config to joke if joke exists.
+    # $self->data->read('plugins') returns array of hashes.
     
     for my $plugin ( $self->data->read('plugins') ) {
         if( exists $jokes{ $plugin->{'id'} } ) {
-            $jokes{ $plugin->{'id'} }->{'is_active'} = $plugin->{'is_active'};
+            $jokes{ $plugin->{'id'} }->{'state'} = $plugin->{'state'};
             $jokes{ $plugin->{'id'} }->{'config'} = thaw $plugin->{'config'}
                 if length $plugin->{'config'};
         }
@@ -171,46 +66,33 @@ sub list {
         title => 'list'
     );
 
-    $self->data_render('list');
-}
-
-#
-#   Render from __DATA__ section.
-#
-
-sub data_render {
-    my ( $self, $template ) = @_;
-
-    my $DATA = Mojo::Command->new->get_all_data( __PACKAGE__ );
-    
-    $self->content_for(
-        body => $self->render( inline => $DATA->{"$template.html.ep"} )
-    );
-    
-    $self->render( inline => $DATA->{'base.html.ep'} );
+    $self->render_data_section('list');
 }
 
 sub update {
+    # It's not updating running-config (just startup-config).
     my $self = shift;
     
-    my $info = $self->read_joke( './lib/' . $self->param('plugin') );
+    my $info = $self->read_joke( $ROOT . $self->param('plugin') );
     
-    #   Make new config from params.
-    #   Add dump of new config into data base.
+    # Make new config from params.
+    # Add dump of new config into data base.
     
-    upd_conf( $info->{'config'} );
+    upd_conf( $self, $info->{'config'} );
     
-
     # Insert if row does not exist.
-    my @plugins = $self->data->read( plugins =>
-        { id => $self->param('plugin') }
+    my @plugins = $self->data->read (
+        plugins => { id => $self->param('plugin') }
     );
 
     unless ( $#plugins ) {
         # Update and print "ok" or "cann't".
         $self->data->update( plugins =>
             # fields
-            { config => freeze( $info->{'config'} ) },
+            {
+                config  => freeze( $info->{'config'} ),
+                state   => $plugins[0]->{'state'} | 0b100
+            },
             # where
             { id => $self->param('plugin') }
         );
@@ -218,19 +100,19 @@ sub update {
     else {
         $self->data->create( plugins =>
             {
-                id => $self->param('plugin'),
-                is_active => 0,
-                config => freeze( $info->{'config'} )
+                id      => $self->param('plugin'),
+                state   => 0b100,
+                config  => freeze( $info->{'config'} )
             }
         );
     }
         
-    $self->done('Plugin config updated!');
+    $self->redirect_to( 'joker_read', plugin => $self->param('plugin') );
     
     #   Recursive make new config.
     
     sub upd_conf {
-        my ( $conf, $parent ) = @_;
+        my ( $self, $conf, $parent ) = @_;
         
         $parent ||= '';
         
@@ -240,13 +122,13 @@ sub update {
                 $conf->{$k} = $self->param("$parent-$k-input");
             }
             else {
-                upd_conf( $conf->{$k}, "$parent-$k" );
+                upd_conf( $self, $conf->{$k}, "$parent-$k" );
             }
         }
     }
 }
 
-sub turn {
+sub toggle {
     my $self = shift;
 
     my @plugins = $self->data->read (
@@ -254,36 +136,36 @@ sub turn {
     );
 
     unless ( $#plugins ) {
+        # Change invert-bit.
+        my $new_state = $plugins[0]->{'state'} ^ 0b010;
+        
         $self->data->update( plugins =>
-            { is_active => 1 },
+            { state => $new_state },
             { id => $self->param('plugin') }
         );
     }
     else {
         $self->data->create( plugins =>
             {
-                id => $self->param('plugin'),
-                is_active => 1
+                id      => $self->param('plugin'),
+                state   => 0b010
             }
         );
     }
 
-    $self->done( 'Plugin is turning ' . $self->param('turn') );
+    $self->redirect_to( 'joker_read', plugin => $self->param('plugin') );
 }
 
 sub scan {
     my $self = shift;
     
-    #
-    # Recursive get all files from $self->info('config')->{'scan_path'}.
-    #
-    
-    my @dir = <$PLUG_PATH*>;
+    # Recursive get all files from $ROOT.
+    my @dir = <$ROOT*>;
     my @files;
     
     while( @dir ) {
         my $path = pop @dir;
-
+        
         # if file
         push @files, $path   if -r $path;
         
@@ -291,12 +173,7 @@ sub scan {
         push @dir, <$path/*> if -d $path;
     }
     
-    #
-    #   Read all service information.
-    #   $self->stash('jokes') will have hash (joke's name is a key)
-    #   of hashes (info).
-    #
-
+    # Read all service information.
     my %jokes;
     
     for my $joke ( @files ) {
@@ -319,10 +196,12 @@ sub read_joke {
     # Get path to module.
     my ( $self, $module ) = @_;
     
+    return 0 unless $module;
+    
     # Get module name.
     $module = path2module($module);
     
-    # Needed info.
+    # Check info.
     # Dynamic load module.
     use lib $module;
     
@@ -332,12 +211,10 @@ sub read_joke {
     no lib $module;
     
     # Info can be not defined...
-    if( $info ) {
-        $info->{'name'} = $module;
-        
+    if( defined $info ) {
+        $info->{'name'} = substr $module, 2 + length path2module($ROOT);
         return $info;
     }
-    
     return 0;
 }
 
@@ -353,6 +230,132 @@ sub path2module {
 
 1;
 
+package Mojolicious::Plugin::Joker;
+
+use base 'Mojolicious::Plugin';
+use Storable 'thaw';
+
+our $VERSION = '0.2';
+
+# Will run once.
+sub register {
+    my ( $self, $app ) = @_;
+    
+    my $session = $app->sessions;
+    
+    # Preload core plugins.
+    my @preload_modules = qw/message data user/;
+    $app->plugin('message');
+    $app->plugin('data');
+    $app->plugin( 'user' => { id => $session->{'user_id'} } );
+    
+    #
+    #   Joker's routes.
+    #
+    
+    my $r = $app->routes;
+    $r->namespace('Mojolicious::Plugin::Controller');
+    
+    # List of plugins, which I found in ./lib/Mojolicious/Plugin.
+    $r->route('/joker')->to('joker#list')->name('joker_list');
+    
+    # Plugin's CRUD
+    # =============
+    # To "create" plugin, you need move it in plugin's directory.
+    # To "delete" it, you need remove its file form plugin's directory,
+    # but it does not purge configuration.
+    
+    # Read. Show plugin's info.
+    $r->route('/joker/:plugin')->via('get')->to('joker#read')->name('joker_read');
+    
+    # Update. Only config is changable in plugin's info.
+	$r->route('/joker/:plugin')->via('post')->to('joker#update')->name('joker_update');
+    
+    # Also you can turn it on or off... after restart application.
+    $r->route('/joker/toggle/:plugin')->to('joker#toggle')->name('joker_toggle');
+
+    #
+    #   Plugins.
+    #
+    
+    my @plugins = $app->data->read('plugins');
+    
+    # Change state.
+    map {
+        # Annul change-bit.
+        $_->{'state'} &= 0b011;
+        # Invert active-bit if invert-bit is 1.
+        $_->{'state'} ^= 0b011 if $_->{'state'} & 0b010;
+    } @plugins;
+    
+    $app->data->update(
+        plugins => { state => $_->{'state'} }, { id => $_->{'id'} }
+    ) for @plugins;
+    
+    # Load active plugins.
+    @plugins = grep { $_->{'state'} == 0b001 } @plugins;
+    
+    # Exclude preload modules.
+    my %set;
+    ++$set{$_}      for @plugins;
+    delete $set{$_} for @preload_modules;
+    @plugins = keys %set;
+    
+    $app->plugin( lc $_->{'id'} ) for @plugins;
+    
+	#
+	#   Helpers.
+	#
+	
+    $app->helper (
+    	# Recursive build html tables for config structure.
+    	# FIXME: it's dirty.
+        html_hash_tree => sub {
+            my ( $self, $config, $parent ) = @_;
+            my $ret;
+            $parent ||= '';
+            
+            for my $k ( keys %$config ) {
+                $ret .= "<tr><td>$k</td><td name='$parent-$k'>";
+                
+                # Branch or leaf?
+                $ret .= ref $config->{$k} ?
+                    $self->html_hash_tree( $config->{$k}, "$parent-$k" ) :
+                    "<input value='" . $config->{$k} . "' name='$parent-$k-input'>";
+                
+                $ret .= "</td></tr>";
+            }
+
+            return "<table>$ret</table>";
+        }
+    );
+    
+    $app->helper(
+        # Render from __DATA__ section.
+        render_data_section => sub {
+            my ( $self, $package, $template ) = @_;
+            
+            unless ( defined $template ) {
+                $template = $package;
+                $package = __PACKAGE__;
+            }
+
+            my $DATA = Mojo::Command->new->get_all_data( __PACKAGE__ );
+            
+            my $BODY = $package ne __PACKAGE__ ? 
+                Mojo::Command->new->get_all_data( $package ) : $DATA;
+            
+            $self->content_for (
+                body => $self->render( inline => $BODY->{"$template.html.ep"} )
+            );
+            
+            $self->render( inline => $DATA->{'base.html.ep'} );
+        }
+    );
+}
+
+1;
+
 __DATA__
 @@ base.html.ep
 <!doctype html>
@@ -361,7 +364,7 @@ __DATA__
         <style>
 .page {
 	margin:0px auto;
-	width:800px;
+	width:600px;
 	color:#222;
 	font-family:Sans, Arial;
 }
@@ -376,6 +379,16 @@ a {
 	-webkit-border-radius: 10px;
 	border-radius: 10px;
 	-khtml-border-radius: 10px;
+}
+.info {
+    padding: 5px 5px 5px 15px;
+    margin: 0px 0px 10px 10px;
+	background: #ffd;
+	border: 1px solid #fff7dd;
+	-moz-border-radius: 4px;
+	-webkit-border-radius: 4px;
+	border-radius: 4px;
+	-khtml-border-radius: 4px;
 }
 .simple_table {
     border:0px;
@@ -394,6 +407,8 @@ td.changeable {
 body {
     padding:0px;
     margin:0px;
+    font-family: Sans-Serif,'Lucida Grande';
+    font-size: 14px;
 }
 img {
     border:0px;
@@ -405,15 +420,14 @@ img {
 .actions {
     float:right;
 }
-.plugin a {
-    text-decoration: none;
-    color: #c62;
-}
 a.action:hover {
     background-color:#ddd;
 }
 .action {
+    float:left;
+    display:inline;
     padding:5px 10px 5px 10px;
+    margin:-6px 0px 0px 10px;
 }
 .plugins {
     margin:0px auto;
@@ -422,22 +436,19 @@ a.action:hover {
 .plugins h2 {
     color:#ccc;
 }
-a.on {
+.on, a.on {
     font-weight:bold;
     color:#a00;
     font-family:"Times new roman";
     text-decoration: none;
+    display:inline;
 }
-a.off {
+.off, a.off {
     font-weight:bold;
     color:#ccc;
     font-family:"Times new roman";
     text-decoration: none;
-}
-.changeable {
-    border:1px solid #ddd;
-    background:#fafafa;
-    color: #222;
+    display:inline;
 }
         </style>
         <link rel="icon" href="/img/joker/j64.png" type="image/x-icon" />
@@ -452,28 +463,34 @@ a.off {
 --> </body>
 </html>
 
-@@ update.html.ep
-% content_for body => begin
-%= dumper $self->stash('config');
-% end
-
 @@ list.html.ep
 % content_for body => begin
 <div class="plugins">
 <h2>Plugin list</h2>
 %   my $jokes = $self->stash('jokes');
 %   for my $plugin (values %$jokes) {
-%       my ($stat, $do) = $plugin->{'is_active'} ? ('on','off') : ('off','on');
-        <a href="<%= url_for('joker_read', plugin => $plugin->{'name'}) %>">
+%       my $active = $plugin->{'state'} & 0b001;
+%       my $invert = $plugin->{'state'} & 0b010;
+%       my $change = $plugin->{'state'} & 0b100;
+%
         <div class="plugin rounded">
-            <%= $plugin->{'name'} %> (<%= $plugin->{'version'} %>)
+            <a href="<%= url_for('joker_read', plugin => $plugin->{'name'}) %>">
+                <%= $plugin->{'name'} %></a> (<%= $plugin->{'version'} %>)
             <div class="actions">
-                <a class="action <%= $stat %>
-                    rounded" href="<%= url_for('joker_turn',
-                        plugin => $plugin->{'name'}, turn => $do) %>">J</a>
+% if ( $invert ) {
+                <div class="rounded action">
+                    <span class="<%= $active ? 'on' : 'off' %>">J</span> &rarr;
+                    <span class="<%= $active ? 'off' : 'on' %>">J</span>
+                </div>
+% }
+% if ( $change ) {
+                <div class="rounded on action">*</div> &nbsp;
+% }
+                <div class="action 
+%= $active ? 'on' : 'off';
+                    rounded" href="<%= url_for('joker_toggle', plugin => $plugin->{'name'}) %>">J</div>
             </div>
         </div>
-        </a>
 %   }
 </div>
 <!-- End of body 
@@ -481,16 +498,30 @@ a.off {
 
 @@ read.html.ep
 % content_for body => begin
-%   my $jokes = $self->stash('jokes');
-%   for my $plugin (values %$jokes) {
-%       my ($stat, $do) = $plugin->{'is_active'} ? ('on','off') : ('off','on');
+% my $plugin = $self->stash('jokes');
+%
+% my $active = $plugin->{'state'} & 0b001;
+% my $invert = $plugin->{'state'} & 0b010;
+% my $change = $plugin->{'state'} & 0b100;
+%
 <div class="plugins">
-    <h2><a class="on rounded action" href="<%= url_for('joker_list') %>">J</a> &rarr;
+    <h2><a class="on rounded action" href="<%= url_for('joker_list') %>">J</a>&nbsp;&rarr;
         <%= $plugin->{'name'} %></h2>
+%#
+%#          Show notifications
+%#
+% if ( $invert ) {
+    <div class="info">
+        Joke should be restarted to turn it <%= $active ? 'off' : 'on' %>.
+    </div>
+% }
+% if ( $change ) {
+    <div class="info">
+        Joke should be restarted to apply changes.
+    </div>
+% }
     <div class="actions">
-        <a class="action <%= $stat %> rounded" href="
-        %= url_for('joker_turn', plugin => $plugin->{'name'}, turn => $do)
-        ">J</a>
+        <div class="action <%= $active ? 'on' : 'off' %> rounded">J</div>
     </div>
 %#
 %#          PLUGIN's INFO
@@ -498,12 +529,16 @@ a.off {
 <div class="plugins rounded">
     <table class="simple_table">
         <tr>
-            <td>version</td>
-            <td><%= $plugin->{'version'} %></td>
+            <td>about</td>
+            <td><%= $plugin->{'about'} %>
+                <a href=<%= url_for('joker_toggle', plugin => $plugin->{'name'}) %>>
+                    Turn it <%= ($active xor $invert) ? 'off' : 'on' %>
+                </a>
+            </td>
         </tr>
         <tr>
-            <td>about</td>
-            <td><%= $plugin->{'about'} %></td>
+            <td>version</td>
+            <td><%= $plugin->{'version'} %></td>
         </tr>
         <tr>
             <td>depends</td>
@@ -512,19 +547,23 @@ a.off {
 %#          LIST OF DEPS
 %#
 % for my $dep ( @{$plugin->{'depends'}} ) {
-<a href="<%= url_for('joker_read', plugin => "Mojolicious::Plugin::$dep")%>
-"><%= $dep %></a>&nbsp;
+    <a href="<%= url_for('joker_read', plugin => $dep)%>"><%= $dep %></a>&nbsp;
 % }
             </td>
         </tr>
         <tr>
             <td>config</td>
             <td>
+% if ( keys %{$plugin->{'config'}} ) {
 <form action="<%= url_for('joker_update', plugin => $plugin->{'name'}) %>"
     method=POST>
-    %== html_hash_tree( $plugin->{'config'} )
+%== html_hash_tree( $plugin->{'config'} );
     <input type="submit" class="alignright">
 </form>
+% }
+% else {
+    empty
+% }
             </td>
         </tr>
         <tr>
@@ -534,7 +573,6 @@ a.off {
     </table>
 </div>
 </div>
-%   }
 <!-- End of body 
 % end
 
@@ -544,8 +582,13 @@ __END__
 
 =head2 Plugin table
 
-    UNIC varchar| Binary    | BLOB
-    id          | is_active | config
+    UNIC varchar 255 | Decimal 1 | Tiny BLOB
+    id               | state(0)  | config
+    
+    state: change-bit | invert-bit | active-bit
+    1 - if currently working;
+    +2 - if invert working bit on restart;
+    +4 - if configuration changed.
 
 =head1 COPYRIGHT AND LICENSE
 
