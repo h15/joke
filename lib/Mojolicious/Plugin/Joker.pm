@@ -459,8 +459,8 @@ a.action:hover {
     <body>
         <div class=page>
             %= content_for 'body'
-        </div>
---> </body>
+-->     </div>
+    </body>
 </html>
 
 @@ list.html.ep
