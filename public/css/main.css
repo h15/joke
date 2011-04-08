@@ -1,27 +1,138 @@
-.page {
-	margin:0px auto;
-	width:800px;
-	color:#222;
-	font-family:Sans, Arial;
+/*
+ * COPYRIGHT AND LICENSE
+ *
+ * Copyright (C) 2011, Georgy Bazhukov.
+ *
+ * This program is free software, you can redistribute it and/or modify it under
+ * the terms of the Artistic License version 2.0.
+ */
+
+/**********
+ *  Tags  *
+ **********/
+body {
+    padding:0px;
+    margin:0px;
+    font-family: Sans-Serif,'Lucida Grande';
+    font-size: 14px;
 }
 
 a {
     color: #c62;
 }
 
-.post {
-	margin: 5px 0px;
+img {
+    border:0px;
+}
+
+/***************
+ * HTML5
+ ***************/
+
+nav, header, article, footer {
+    display: block;
+}
+
+footer {
+    text-align: center;
+    color: #aaa;
+    font-style:italic;
+    padding:5px;
+}
+
+.page {
+	margin:0px auto;
+	width:600px;
+	color:#222;
+	font-family:Sans, Arial;
 }
 
 .rounded {
 	padding: 5px;
 	background: #eee;
 	border: 1px solid #ddd;
-	
 	-moz-border-radius: 10px;
 	-webkit-border-radius: 10px;
 	border-radius: 10px;
 	-khtml-border-radius: 10px;
+}
+
+.info {
+    padding: 5px 5px 5px 15px;
+    margin: 0px 0px 10px 10px;
+	background: #ffd;
+	border: 1px solid #fff7dd;
+	-moz-border-radius: 4px;
+	-webkit-border-radius: 4px;
+	border-radius: 4px;
+	-khtml-border-radius: 4px;
+}
+
+.simple_table {
+    border:0px;
+    //width:600px;
+}
+
+.simple_table td {
+    vertical-align: top;
+    padding:2px 5px 2px 5px;
+}
+
+td.changeable {
+    border:1px solid #ddd;
+}
+
+.alignright {
+    float:right;
+}
+
+.plugin {
+    margin-top:5px;
+    padding: 10px;
+}
+
+.actions {
+    float:right;
+}
+
+a.action:hover {
+    background-color:#ddd;
+}
+
+.action {
+    float:left;
+    display:inline;
+    padding:5px 10px 5px 10px;
+    margin:-6px 0px 0px 10px;
+}
+
+.plugins {
+    margin:0px auto;
+    width:600px;
+}
+
+.plugins h2 {
+    color:#ccc;
+}
+
+.on, a.on {
+    font-weight:bold;
+    color:#a00;
+    font-family:"Times new roman";
+    text-decoration: none;
+    display:inline;
+}
+
+.off, a.off {
+    font-weight:bold;
+    color:#ccc;
+    font-family:"Times new roman";
+    text-decoration: none;
+    display:inline;
+}
+
+.post {
+	margin: 5px 0px;
 }
 
 .center {
@@ -74,60 +185,6 @@ td.changeable {
 
 .alignleft {
     float:left;
-}
-
-body {
-    padding:0px;
-    margin:0px;
-}
-
-img {
-    border:0px;
-}
-
-.plugin {
-    margin-top:5px;
-    padding: 10px;
-}
-
-.actions {
-    float:right;
-}
-
-.plugin a {
-    text-decoration: none;
-    color: #c62;
-}
-
-a.action:hover {
-    background-color:#ddd;
-}
-
-.action {
-    padding:5px 10px 5px 10px;
-}
-
-.plugins {
-    margin:0px auto;
-    width:600px;
-}
-
-.plugins h2 {
-    color:#ccc;
-}
-
-a.on {
-    font-weight:bold;
-    color:darkred;
-    font-family:"Times new roman";
-    text-decoration: none;
-}
-
-a.off {
-    font-weight:bold;
-    color:#888;
-    font-family:"Times new roman";
-    text-decoration: none;
 }
 
 .changeable {
