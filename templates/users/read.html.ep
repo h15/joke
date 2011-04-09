@@ -1,12 +1,19 @@
 % extends 'base';
-<%= content extra_headers => begin %>
-	<title>
-		<%=l 'user' %> <%= $id %>
-	</title>
-<% end %>
+% content_for title => begin
+    <%=l 'user' %> <%= $id %>
+% end
 
-<%= content body => begin %>
-<div class=page>
+% content_for nav => begin
+% end
+
+% content_for header => begin
+% end
+
+% content_for footer => begin
+% end
+
+%= content body => begin
+<article class=page>
     <div class="center rounded user">
         <table class="aligncenter">
             <tr>
@@ -27,5 +34,5 @@
             </tr>
         </table>
     </div>
-</div>
-<% end %>
+</article>
+% end

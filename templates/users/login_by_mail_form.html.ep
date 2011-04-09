@@ -1,11 +1,18 @@
 % extends 'base';
-<%= content extra_headers => begin %>
-	<title>
-		<%=l 'Login' %>
-	</title>
-<% end %>
+% content_for title => begin
+    Login
+% end
 
-<%= content body => begin %>
+% content_for nav => begin
+% end
+
+% content_for header => begin
+% end
+
+% content_for footer => begin
+% end
+
+%= content body => begin
 <div class=page>
     <form method=post action="<%= url_for('auths_login_by_mail_request') %>">
 	    <table class="center rounded">
@@ -26,4 +33,4 @@
 	        </tr>
 	    </table>
 </div>
-<% end %>
+% end

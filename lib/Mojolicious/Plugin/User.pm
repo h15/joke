@@ -1,7 +1,9 @@
-package Mojolicious::Plugin::User;
-
 use strict;
 use warnings;
+
+use Digest::MD5 "md5_hex";
+
+package Mojolicious::Plugin::User;
 
 use Mojo::Base 'Mojolicious::Plugin';
 
@@ -93,7 +95,7 @@ sub new {
 
 sub is_active {
     my $self = shift;
-    return 1 if $self->{'inactive_reason'} == 0;
+    return 1 if $self->{'ban_reason'} == 0;
     return 0;
 }
 
@@ -101,7 +103,7 @@ sub is_admin {
     my $self = shift;
     
     # In soviet Russia^W^W phpbb3 it's true.
-    return 1 if $self->{'role'} == 3;
+    return 1 if grep { $_ == 3 } split ';', $self->{'groups'};
     return 0;
 }
 
@@ -147,18 +149,27 @@ sub create_form {
 sub create {
     my $self = shift;
     
-    my $key = 
+    my $key = Digest::MD5::md5_hex(rand);
+    
+    my @users = $self->data->read( users => {mail => $self->param('mail')} );
+    
+    unless ( $#users ) {
+        $self->redirect_to('users_create_form');
+        return;
+    }
     
     #
-    #   Send mail
+    #   TODO: Send mail
     #
     
     $self->data->create( users => {
         mail    => $self->param('mail'),
         regdate => time,
         confirm_time => time + 60*60*24*7,
-        
+        confirm_key  => $key
     });
+    
+    $self->done('Check your mail.');
 }
 
 sub check_access {
@@ -219,9 +230,7 @@ sub logout {
     my $self = shift;
     
     # Delete session.
-	$self->session(
-		user_id  => '',
-	)->redirect_to('index');
+	$self->session(	user_id  => '' )->redirect_to('index');
 }
 
 sub login_form {
@@ -237,6 +246,44 @@ sub login_form {
 1;
 
 __END__
+
+=head1 Data Base Struct
+
+=head2 User table
+
+    id              int 11                  (++)
+    groups          tinytext                (empty)
+    name            varchar 32  utf8-bin    (anonymous)
+    mail            varchar 64  ascii-bin
+    regdate         int 11                  (NOW on create)
+    password        varchar 32              (0)
+    ban_reason      int 2                   (0)
+    ban_time        int 11                  (0)
+    confirm_key     varchar 32              (generate on create)
+    confirm_time    int 11                  (NOW on create)
+
+=head3 For MySQL
+
+    CREATE TABLE `joker`.`joke__users` (
+        `id` INT( 11 ) UNSIGNED NOT NULL AUTO_INCREMENT ,
+        `groups` TINYTEXT NOT NULL ,
+        `name` VARCHAR( 32 ) CHARACTER SET utf8 COLLATE utf8_bin NULL ,
+        `mail` VARCHAR( 64 ) CHARACTER SET ascii COLLATE ascii_bin NOT NULL ,
+        `regdate` INT( 11 ) UNSIGNED NOT NULL ,
+        `password` VARCHAR( 32 ) CHARACTER SET ascii COLLATE ascii_bin NOT NULL DEFAULT '0',
+        `ban_reason` INT( 2 ) UNSIGNED NOT NULL DEFAULT '0',
+        `ban_time` INT( 11 ) UNSIGNED NOT NULL DEFAULT '0',
+        `confirm_key` VARCHAR( 32 ) CHARACTER SET ascii COLLATE ascii_bin NOT NULL ,
+        `confirm_time` INT( 11 ) UNSIGNED NOT NULL ,
+        PRIMARY KEY ( `id` ) ,
+        INDEX ( `id` ) ,
+        UNIQUE (
+            `name` ,
+            `mail`
+        )
+    ) ENGINE = MYISAM ;
+    
+    INSERT INTO `joke__users` (`id`, `groups`, `name`, `mail`, `regdate`, `password`, `ban_reason`, `ban_time`, `confirm_key`, `confirm_time`) VALUES(1, '', 'anonymous', 'anonymous@lorcode.org', 0, '0', 0, 0, '', 0);
 
 =head1 COPYRIGHT AND LICENSE
 

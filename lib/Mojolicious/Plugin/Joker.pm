@@ -31,7 +31,7 @@ sub register {
     
     # Check access
     my $r = $route->bridge('/joker')->to( cb => sub {
-        $self->user('new')->is_admin;
+        shift->user('new')->is_admin;
     } );
     
     # List of plugins, which I found in ./lib/Mojolicious/Plugin.
@@ -370,7 +370,16 @@ __END__
 
     UNIC varchar 255 | Decimal 1 | Tiny BLOB
     id               | state(0)  | config
-    
+
+=head3 For MySQL
+
+    CREATE TABLE IF NOT EXISTS `joke__plugins` (
+      `id` varchar(11) CHARACTER SET ascii COLLATE ascii_bin NOT NULL,
+      `state` int(2) NOT NULL,
+      `config` tinytext NOT NULL,
+      UNIQUE KEY `id` (`id`)
+    ) ENGINE=MyISAM DEFAULT CHARSET=utf8;
+
     state: change-bit | invert-bit | active-bit
     1 - if currently working;
     +2 - if invert working bit on restart;
