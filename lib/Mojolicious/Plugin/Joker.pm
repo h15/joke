@@ -31,17 +31,7 @@ sub register {
     
     # Check access
     my $r = $route->bridge('/joker')->to( cb => sub {
-        my $self = shift;
-        
-        my $id = $self->sess->{'user_id'};
-        # Anonymous has 1st id.
-        $id ||= 1;
-
-        $self->user( new Mojolicious::Plugin::User::User (
-            $self->data->read( users => { id => $id } )
-        ) );
-        
-        return $self->user->is_admin;
+        $self->user('new')->is_admin;
     } );
     
     # List of plugins, which I found in ./lib/Mojolicious/Plugin.

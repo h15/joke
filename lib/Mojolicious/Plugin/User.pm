@@ -61,20 +61,20 @@ sub register {
     
     $app->helper (
         user => sub {
-            my ( $self, $new_obj ) = @_;
+            my ($self, $action) = @_;
             
-            if ( defined $new_obj ) {
-                $obj = $new_obj;
-            }
+            return $obj unless defined $action;
+            
+            my $session = $app->sessions;
+            my $id = $session->{'user_id'};
+            # Anonymous has 1st id.
+            $id ||= 1;
+            
+            $obj = new Mojolicious::Plugin::User::User (
+                $self->data->read( users => { id => $id } )
+            );
             
             return $obj;
-        }
-    );
-    
-    $app->helper (
-        sess => sub {
-            my $session = $app->sessions;
-            return $session;
         }
     );
 }
@@ -164,14 +164,7 @@ sub create {
 sub check_access {
     my $self = shift;
     
-    my $id = $self->sess->{'user_id'};
-    
-    # Anonymous has 1st id.
-    $id ||= 1;
-    
-    $self->user( new Mojolicious::Plugin::User::User (
-        $self->data->read( users => { id => $id } )
-    ) );
+    $self->user('new');
     
     #
     #   TODO: some easy acl.
