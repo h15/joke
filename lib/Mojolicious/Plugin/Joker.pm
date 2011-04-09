@@ -29,7 +29,20 @@ sub register {
     
     $route->namespace('Mojolicious::Plugin::Controller');
     
-    my $r = $route->bridge('/joker')->to('users#check_access');
+    # Check access
+    my $r = $route->bridge('/joker')->to( cb => sub {
+        my $self = shift;
+        
+        my $id = $self->sess->{'user_id'};
+        # Anonymous has 1st id.
+        $id ||= 1;
+
+        $self->user( new Mojolicious::Plugin::User::User (
+            $self->data->read( users => { id => $id } )
+        ) );
+        
+        return $self->user->is_admin;
+    } );
     
     # List of plugins, which I found in ./lib/Mojolicious/Plugin.
     $r->route('/')->to('joker#list')->name('joker_list');
@@ -84,7 +97,6 @@ sub register {
 	
     $app->helper (
     	# Recursive build html tables for config structure.
-    	# FIXME: it's dirty.
         html_hash_tree => sub {
             my ( $self, $config, $parent ) = @_;
             my $ret;
