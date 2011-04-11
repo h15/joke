@@ -2,6 +2,8 @@ use strict;
 use warnings;
 
 use Digest::MD5 "md5_hex";
+use MIME::Base64;
+use Mojolicious::Plugin::User::User;
 
 package Mojolicious::Plugin::User;
 
@@ -26,7 +28,8 @@ sub info {
         depends => [ qw/Data Message Mail/ ],
         config  => {
         # May be should init admin here?
-            cookies => 'some random string'
+            cookies => 'some random string',
+            confirm => 7
         }
     };
     
@@ -42,21 +45,29 @@ sub register {
     
     # Routes
     my $route = $app->routes;
-    my $r = $route->bridge('/user')->to('users#check_access');
+    $route->namespace('Mojolicious::Plugin::Controller');
+    my $r = $route->bridge('/user')->to('auths#check_access');
     
-    # CRUD for User.
-    $r->route('/new')->via('get')->to('users#create_form')->name('users_create_form');
+    # User (CRUD+L)
+    $route->route('/user/new')->via('get')->to('users#form')->name('users_form');
+    $route->route('/user/:id' , id => qr/\d+/)->via('get')->to('users#read')->name('users_read');
+    $route->route('/users/:id', id => qr/\d*/)->via('get')->to('users#list')->name('users_list');
     $r->route('/new')->via('post')->to('users#create')->name('users_create');
-    $r->route('/:id', id => qr/\d+/)->via('post')->to('users#read')->name('users_read');
     $r->route('/:id', id => qr/\d+/)->via('put')->to('users#update')->name('users_update');
     $r->route('/:id', id => qr/\d+/)->via('delete')->to('users#delete')->name('users_delete');
-    # +List
-    $r->route('/list/:id', id => qr/\d+/)->via('get')->to('users#create')->name('users_list');
     
-    # Auth
-    $r->route('/login')->via('get')->to('users#login_form')->name('users_login_form');
-    $r->route('/login')->via('post')->to('users#login')->name('users_login');
-    $r->route('/logout')->to('users#logout')->name('users_logout');
+    # Auth (Action)
+    $r->route('/login')->via('post')->to('auths#login')->name('auths_login');
+    $r->route('/logout')->to('auths#logout')->name('auths_logout');
+    $route->route('/user/login')->via('get')->to( cb => sub {
+        shift->render( template => 'auths/login_form' )
+    } )->name('auths_login_form');
+    # Login by mail:
+    $route->route('/user/login/mail')->via('get')->to( cb => sub {
+        shift->render( template => 'auths/login_mail_form' )
+    } )->name('auths_login_mail_form');
+    $route->route('/user/login/mail')->via('post')->to('auths#login_mail_request')->name('auths_login_mail_request');
+    $route->route('/user/login/mail/confirm')->to('auths#login_mail')->name('auths_login_mail');
     
     # Shared object.
     my $obj;
@@ -79,168 +90,6 @@ sub register {
             return $obj;
         }
     );
-}
-
-1;
-
-package Mojolicious::Plugin::User::User;
-
-sub new {
-    my ( $self, @users ) = @_;
-    
-    return bless {}, $self if $#users;
-
-    bless $users[0], $self;
-}
-
-sub is_active {
-    my $self = shift;
-    return 1 if $self->{'ban_reason'} == 0;
-    return 0;
-}
-
-sub is_admin {
-    my $self = shift;
-    
-    # In soviet Russia^W^W phpbb3 it's true.
-    return 1 if grep { $_ == 3 } split ';', $self->{'groups'};
-    return 0;
-}
-
-1;
-
-package Mojolicious::Plugin::Controller::Users;
-
-use base 'Mojolicious::Controller';
-
-sub read {
-    my $self = shift;
-    
-	# Get accounts by id.
-	my @users = $self->select( users => '*', { id => $self->stash('id') } );
-    
-    $self->error("User with this id doesn't exist!") if $#users;
-    
-    if( $self->user->{'id'} != 1                        # not Anonymous
-        && $self->stash('id') == $self->user->{'id'}    # and Self
-        || $self->user->is_admin() ) {                  # or  Admin.
-        
-        $self->read_extended(@users);
-    }
-
-    $self->stash( user => $users[0] );
-
-    $self->render;
-}
-
-sub read_extended {
-    my $self = shift;
-    my @users = @_;
-    
-    $self->render(
-        action => 'read_extended',
-    );
-}
-
-sub create_form {
-    shift->render;
-}
-
-sub create {
-    my $self = shift;
-    
-    my $key = Digest::MD5::md5_hex(rand);
-    
-    my @users = $self->data->read( users => {mail => $self->param('mail')} );
-    
-    unless ( $#users ) {
-        $self->redirect_to('users_create_form');
-        return;
-    }
-    
-    #
-    #   TODO: Send mail
-    #
-    
-    $self->data->create( users => {
-        mail    => $self->param('mail'),
-        regdate => time,
-        confirm_time => time + 60*60*24*7,
-        confirm_key  => $key
-    });
-    
-    $self->done('Check your mail.');
-}
-
-sub check_access {
-    my $self = shift;
-    
-    $self->user('new');
-    
-    #
-    #   TODO: some easy acl.
-    #
-    
-    return 1;
-    if ( $self->user->is_admin ) {
-        return 1;
-    }
-    
-    $self->error('You have not access for this page!');
-    return 0
-}
-
-sub login {
-    #
-    #   TODO: Login attempts counter for ip.
-    #
-    
-	my $self = shift;
-	
-	# It's not an e-mail!
-	$self->IS( mail => $self->param('mail')	);
-	
-	# Get accounts by e-mail.
-	my @users = $self->select( users => '*', {email => $self->param('mail')} );
-    
-    # If this e-mail does not exist
-    # or more than one account has this e-mail.
-    $self->error("This pair(e-mail and password) doesn't exist!") if $#users;
-    
-    my $user = $users[0];
-    
-    # Password test:
-    #   hash != md5( regdate + password + salt )
-    my $s = $user->{'regdate'} . $self->param('passwd') . $self->stash('salt');
-    
-    if ( $user->{'password'} ne Digest::MD5::md5_hex($s) ) {
-        $self->error( "This pair(e-mail and password) doesn't exist!" );
-        
-        # Don't work without return. I don't know why.
-        return;
-    }
-    
-    # Init session.
-    $self->session (
-        user_id  => $user->{'id'},
-    )->redirect_to( 'user_read', id => $user->{'id'} );
-}
-
-sub logout {
-    my $self = shift;
-    
-    # Delete session.
-	$self->session(	user_id  => '' )->redirect_to('index');
-}
-
-sub login_form {
-    my $self = shift;
-    
-    #
-    #   TODO: Login counter and CAPTCHA
-    #
-    $self->stash( title => 'Login' );
-    $self->render_data_section(__PACKAGE__, 'login_form');
 }
 
 1;

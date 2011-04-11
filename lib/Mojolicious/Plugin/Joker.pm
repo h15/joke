@@ -47,7 +47,7 @@ sub register {
     $r->route('/:plugin')->via('get')->to('joker#read')->name('joker_read');
     
     # Update. Only config is changable in plugin's info.
-	$r->route('/:plugin')->via('post')->to('joker#update')->name('joker_update');
+    $r->route('/:plugin')->via('post')->to('joker#update')->name('joker_update');
     
     # Also you can turn it on or off... after restart application.
     $r->route('/toggle/:plugin')->to('joker#toggle')->name('joker_toggle');
@@ -107,26 +107,23 @@ sub register {
         }
     );
     
-    $app->helper(
-        # Render from __DATA__ section.
-        render_data_section => sub {
-            my ( $self, $package, $template ) = @_;
-            
-            unless ( defined $template ) {
-                $template = $package;
-                $package = __PACKAGE__;
+    $app->helper (
+        is => sub {
+            my ($self, $type, $val) = @_;
+
+            if  ( $type eq 'mail' ) {
+                return 1 if $val =~ m/^[a-z0-9_\-.]+@[a-z0-9_\-.]+$/i;
             }
 
-            my $DATA = Mojo::Command->new->get_all_data( __PACKAGE__ );
+            return 0;
+        }
+    );
+    
+    $app->helper (
+        IS => sub {
+            my ($self, $type, $val) = @_;
             
-            my $BODY = $package ne __PACKAGE__ ? 
-                Mojo::Command->new->get_all_data( $package ) : $DATA;
-            
-            $self->content_for (
-                body => $self->render( inline => $BODY->{"$template.html.ep"} )
-            );
-            
-            $self->render( inline => $DATA->{'base.html.ep'} );
+            $self->error( "It's not $type!" ) unless $self->is($type, $val);
         }
     );
 }
