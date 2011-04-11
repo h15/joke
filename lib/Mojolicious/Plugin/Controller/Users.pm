@@ -10,10 +10,10 @@ sub read {
     
     $self->error("User with this id doesn't exist!") if $#users;
     
-    if( $self->user->{'id'} != 1                        # not Anonymous
-        && $self->stash('id') == $self->user->{'id'}    # and Self
-        || $self->user->is_admin() ) {                  # or  Admin.
-        
+    if ( $self->user->{'id'} != 1                         # not Anonymous
+        && ( $self->param('id') == $self->user->{'id'}    # and Self
+             || $self->user->is_admin()                   # or  Admin.
+        ) ) {
         $self->read_extended(@users);
     }
 

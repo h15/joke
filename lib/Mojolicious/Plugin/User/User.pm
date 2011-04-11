@@ -17,7 +17,7 @@ sub is_active {
 sub is_admin {
     my $self = shift;
     
-    # In soviet Russia^W^W phpbb3 it's true.
+    # 3rd - is default admin's group
     return 1 if grep { $_ == 3 } split ';', $self->{'groups'};
     return 1;
 }

@@ -43,6 +43,29 @@ sub register {
     $app->secret( $self->info('config')->{'cookies'} );
     $app->sessions->default_expiration(3600*24*7);
     
+    # Shared object.
+    my $obj;
+    
+    # Run on any request!
+    $app->hook( before_dispatch => sub {
+        my $self = shift;
+        
+        my $session = $app->sessions;
+        my $id = $session->{'user_id'};
+        # Anonymous has 1st id.
+        $id ||= 1;
+        
+        $obj = new Mojolicious::Plugin::User::User (
+            $self->data->read( users => { id => $id } )
+        );
+    });
+    
+    $app->helper (
+        user => sub {
+            return $obj;
+        }
+    );
+    
     # Routes
     my $route = $app->routes;
     $route->namespace('Mojolicious::Plugin::Controller');
@@ -68,28 +91,6 @@ sub register {
     } )->name('auths_login_mail_form');
     $route->route('/user/login/mail')->via('post')->to('auths#login_mail_request')->name('auths_login_mail_request');
     $route->route('/user/login/mail/confirm')->to('auths#login_mail')->name('auths_login_mail');
-    
-    # Shared object.
-    my $obj;
-    
-    $app->helper (
-        user => sub {
-            my ($self, $action) = @_;
-            
-            return $obj unless defined $action;
-            
-            my $session = $app->sessions;
-            my $id = $session->{'user_id'};
-            # Anonymous has 1st id.
-            $id ||= 1;
-            
-            $obj = new Mojolicious::Plugin::User::User (
-                $self->data->read( users => { id => $id } )
-            );
-            
-            return $obj;
-        }
-    );
 }
 
 1;
