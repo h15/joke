@@ -1,32 +1,12 @@
 package Mojolicious::Plugin::Message;
-
-use strict;
-use warnings;
-
 use Mojo::Base 'Mojolicious::Plugin';
 
-our $VERSION = '0.1';
+has version => 0.1;
+has about   => 'Message system.';
+has depends => sub { [] };
+has config  => sub { {} };
 
-#
-#   Info method for Joker plugin manager.
-#
-
-sub info {
-    my ($self, $field) = @_;
-    
-    my $info = {
-        version => $VERSION,
-        author  => 'h15 <georgy.bazhukov@gmail.com>',
-        about   => 'Message system.',
-        # Yeah! No fields, no deps, no configs!
-        fields  => {},
-        depends => [],
-        config  => {}
-    };
-    
-    return $info->{$field} if $field;
-    return $info;
-}
+has joke => sub { 1 };
 
 sub register {
     my ( $self, $app ) = @_;

@@ -1,50 +1,54 @@
-use strict;
-use warnings;
+package Mojolicious::Plugin::User;
+use Mojo::Base 'Mojolicious::Plugin';
 
 use Digest::MD5 "md5_hex";
 use MIME::Base64;
+
 use Mojolicious::Plugin::User::User;
 
-package Mojolicious::Plugin::User;
+has version => 0.2;
+has about   => 'Plugin for Users system.';
+has depends => sub { [ qw/Data Message Mail/ ] };
+has config  => sub { { cookies => 'some random string', confirm => 7 } };
 
-use Mojo::Base 'Mojolicious::Plugin';
+has joke => sub { 1 };
 
-our $VERSION = '0.1';
+=head1 Plugin User
 
-#
-#   Info method for Joker plugin manager.
-#
+=head2 About
 
-sub info {
-    my ($self, $field) = @_;
-    
-    my $info = {
-        version => $VERSION,
-        author  => 'h15 <georgy.bazhukov@gmail.com>',
-        about   => 'Plugin for Users system.',
-        fields  => {
-        # Needed fields.
-        },
-        depends => [ qw/Data Message Mail/ ],
-        config  => {
-        # May be should init admin here?
-            cookies => 'some random string',
-            confirm => 7
-        }
-    };
-    
-    return $info->{$field} if $field;
-    return $info;
-}
+Use this plugin to enable ACL (access control list), authentification and CRUD
+users. It used by Joke default.
+
+=head2 Structure
+
+    Mojolicious::Plugin
+     `- User.pm                 # Routes, info, hook for running on each request
+         |- User.pm             # User object
+         `- Controller
+             |- Auths.pm        # Login/out, by mail
+             `- Users.pm        # CRUD+L
+
+=head3 Mojolicious::Plugin::User
+
+=over
+
+=item register
+
+Plugin's default method for init self on load. Register consists hook for reinit
+on every dispatch (every request in our case).
+
+=back
+
+=cut
 
 sub register {
-    my ( $self, $app ) = @_;
+    my ( $controller, $app ) = @_;
+    my $self = new Mojolicious::Plugin::User;
+    my $user = new Mojolicious::Plugin::User::User;
     
-    $app->secret( $self->info('config')->{'cookies'} );
+    $app->secret( $self->config->{'cookies'} );
     $app->sessions->default_expiration(3600*24*7);
-    
-    # Shared object.
-    my $obj;
     
     # Run on any request!
     $app->hook( before_dispatch => sub {
@@ -55,33 +59,31 @@ sub register {
         # Anonymous has 1st id.
         $id ||= 1;
         
-        $obj = new Mojolicious::Plugin::User::User (
-            $self->data->read( users => { id => $id } )
-        );
+        $user->update( [$self->data->read( users => { id => $id } )]->[0] );
     });
     
     $app->helper (
-        user => sub {
-            return $obj;
-        }
+        user => sub { $user }
     );
     
     # Routes
     my $route = $app->routes;
-    $route->namespace('Mojolicious::Plugin::Controller');
-    my $r = $route->bridge('/user')->to('auths#check_access');
+    my $r = $route->bridge('/user')->to('users#check_access');
+    my $n = 'Mojolicious::Plugin::User::Controller';
     
     # User (CRUD+L)
-    $route->route('/user/new')->via('get')->to('users#form')->name('users_form');
-    $route->route('/user/:id' , id => qr/\d+/)->via('get')->to('users#read')->name('users_read');
-    $route->route('/users/:id', id => qr/\d*/)->via('get')->to('users#list')->name('users_list');
-    $r->route('/new')->via('post')->to('users#create')->name('users_create');
-    $r->route('/:id', id => qr/\d+/)->via('put')->to('users#update')->name('users_update');
-    $r->route('/:id', id => qr/\d+/)->via('delete')->to('users#delete')->name('users_delete');
+    $route->route('/user/new')->via('get')->to( cb => sub {
+        shift->render( template => 'users/form' )
+    })->name('users_form');
+    $route->route('/user/:id' , id => qr/\d+/)->via('get')->to('users#read', namespace => $n)->name('users_read');
+    $route->route('/users/:id', id => qr/\d*/)->via('get')->to('users#list', namespace => $n)->name('users_list');
+    $route->route('/user/new')->via('post')->to('users#create', namespace => $n)->name('users_create');
+    $r->route('/:id', id => qr/\d+/)->via('put')->to('users#update', namespace => $n)->name('users_update');
+    $r->route('/:id', id => qr/\d+/)->via('delete')->to('users#delete', namespace => $n)->name('users_delete');
     
     # Auth (Action)
-    $r->route('/login')->via('post')->to('auths#login')->name('auths_login');
-    $r->route('/logout')->to('auths#logout')->name('auths_logout');
+    $r->route('/login')->via('post')->to('auths#login', namespace => $n)->name('auths_login');
+    $r->route('/logout')->to('auths#logout', namespace => $n)->name('auths_logout');
     $route->route('/user/login')->via('get')->to( cb => sub {
         shift->render( template => 'auths/login_form' )
     } )->name('auths_login_form');
@@ -89,17 +91,17 @@ sub register {
     $route->route('/user/login/mail')->via('get')->to( cb => sub {
         shift->render( template => 'auths/login_mail_form' )
     } )->name('auths_login_mail_form');
-    $route->route('/user/login/mail')->via('post')->to('auths#login_mail_request')->name('auths_login_mail_request');
-    $route->route('/user/login/mail/confirm')->to('auths#login_mail')->name('auths_login_mail');
+    $route->route('/user/login/mail')->via('post')->to('auths#login_mail_request', namespace => $n)->name('auths_login_mail_request');
+    $route->route('/user/login/mail/confirm')->to('auths#login_mail', namespace => $n)->name('auths_login_mail');
 }
 
 1;
 
 __END__
 
-=head1 Data Base Struct
+=head2 Data Base Struct
 
-=head2 User table
+=head3 User table
 
     id              int 11                  (++)
     groups          tinytext                (empty)
@@ -112,7 +114,7 @@ __END__
     confirm_key     varchar 32              (generate on create)
     confirm_time    int 11                  (NOW on create)
 
-=head3 For MySQL
+=head4 For MySQL
 
     CREATE TABLE `joker`.`joke__users` (
         `id` INT( 11 ) UNSIGNED NOT NULL AUTO_INCREMENT ,
@@ -135,7 +137,7 @@ __END__
     
     INSERT INTO `joke__users` (`id`, `groups`, `name`, `mail`, `regdate`, `password`, `ban_reason`, `ban_time`, `confirm_key`, `confirm_time`) VALUES(1, '', 'anonymous', 'anonymous@lorcode.org', 0, '0', 0, 0, '', 0);
 
-=head1 COPYRIGHT AND LICENSE
+=head2 COPYRIGHT AND LICENSE
 
 Copyright (C) 2011, Georgy Bazhukov.
 

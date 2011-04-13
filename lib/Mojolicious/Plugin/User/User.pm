@@ -1,26 +1,21 @@
 package Mojolicious::Plugin::User::User;
+use Mojo::Base -base;
 
-sub new {
-    my ( $self, @users ) = @_;
-    
-    return bless {}, $self if $#users;
+has data => sub { {} };
 
-    bless $users[0], $self;
-}
+has update => sub {
+    my ( $self, $data ) = @_;
+    $self->data->{$_} = $data->{$_} for keys %$data;
+};
 
-sub is_active {
-    my $self = shift;
-    return 1 if $self->{'ban_reason'} == 0;
-    return 0;
-}
+has is_active => sub {
+    shift->data->{'ban_reason'} == 0 ? 1 : 0;
+};
 
-sub is_admin {
-    my $self = shift;
-    
+has is_admin => sub {return 1;
     # 3rd - is default admin's group
-    return 1 if grep { $_ == 3 } split ';', $self->{'groups'};
-    return 1;
-}
+    grep { $_ == 3 } split ' ', shift->{'groups'} ? 1 : 0;
+};
 
 1;
 

@@ -1,63 +1,36 @@
-use strict;
-use warnings;
-
 package Mojolicious::Plugin::Data;
+use Mojo::Base 'Mojolicious::Plugin';
 
-use base 'Mojolicious::Plugin';
+has version => 0.1;
+has about   => 'Data bases\' interface.';
+has depends => sub { [ qw/Message/ ] };
+has config  => sub { {
+    driver => "Sql",
+    auth   => {
+        host    => 'dbi:mysql:joker',
+        user    => 'joker',
+        passwd  => 'fSZs4hCZusneJcbB',
+        prefix  => 'joke__',
+    }
+} };
 
-our $VERSION = '0.1';
-
-#
-#   Info method for Joker plugin manager.
-#
-
-sub info {
-    my ($self, $field) = @_;
-    
-    my $info = {
-        version => $VERSION,
-        author  => 'h15 <georgy.bazhukov@gmail.com>',
-        about   => 'Data bases\' interface.',
-        fields  => {},
-        depends => [ qw/Message/ ],
-        config  => {
-        #
-        # Default config. Will be deleted.
-        #
-        # Should set this config in some other place...
-        #
-            driver => "Sql",
-            auth   => {
-                host    => 'dbi:mysql:joker',
-                user    => 'joker',
-                passwd  => 'fSZs4hCZusneJcbB',
-                prefix  => 'joke__',
-            }
-        }
-    };
-    
-    return $info->{$field} if $field;
-    return $info;
-}
+has joke => sub { 1 };
 
 sub register {
     my ( $self, $app ) = @_;
     
-    #$app->plugin('message');
-    
-    my $data = Mojolicious::Plugin::Data::Data->new( $self->info('config') );
+    my $data = Mojolicious::Plugin::Data::Data->new( $self->config );
     
     $app->error('Cann\'t init data base.') unless $data;
     
     $app->helper(
         # For querys like $self->data->read,
         # where read is a method of Data.
-        data => sub {
-            my $self = shift;
-            return $data;
-        }
+        data => sub { $data }
     );
 }
+
+1;
 
 package Mojolicious::Plugin::Data::Data;
 

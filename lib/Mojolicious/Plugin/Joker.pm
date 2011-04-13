@@ -27,11 +27,11 @@ sub register {
     
     my $route = $app->routes;
     
-    $route->namespace('Mojolicious::Plugin::Controller');
+    $route->namespace('Mojolicious::Plugin::Joker::Controller');
     
     # Check access
     my $r = $route->bridge('/joker')->to( cb => sub {
-        shift->user('new')->is_admin;
+        $app->user->is_admin;
     } );
     
     # List of plugins, which I found in ./lib/Mojolicious/Plugin.
@@ -72,6 +72,12 @@ sub register {
     
     # Load active plugins.
     @plugins = grep { $_->{'state'} == 0b001 } @plugins;
+    
+    # Save them in stash.
+    #my $stash = { plugins => { map { $_->{'id'}, $_ } @plugins } };
+    #$app->stash( joker => $stash );
+    #my $jo = $app->stash('joker');
+    #print $app->dumper( $jo );
     
     # Exclude preload modules.
     my %set;
@@ -130,7 +136,7 @@ sub register {
 
 1;
 
-package Mojolicious::Plugin::Controller::Joker;
+package Mojolicious::Plugin::Joker::Controller::Joker;
 use Storable qw/freeze thaw/;
 
 use base 'Mojolicious::Controller';
@@ -335,7 +341,13 @@ sub read_joke {
     use lib $module;
     
     my $obj = bless {}, $module;
-    my $info = $obj->info if defined *{$module . '::info'};
+    
+    my $info = {
+        'version' => $obj->version,
+        'about'   => $obj->about,
+        'depends' => $obj->depends,
+        'config'  => $obj->config
+    } if $obj->can('joke');
     
     no lib $module;
     
