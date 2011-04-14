@@ -78,7 +78,7 @@ sub login_mail {
     return $self->error('Auth failed!') unless $#users;
     
     # Too late
-    if ( $users[0]->{'confirm_time'} > time + 86400 * $self->info('config')->{'confirm'} ) {
+    if ( $users[0]->{'confirm_time'} > time + 86400 * $self->user->config->{'confirm'} ) {
         $self->data->update( user =>
             { confirm_key => '', confirm_time => 0 },
             { mail => $mail }

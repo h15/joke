@@ -3,16 +3,16 @@ use Mojo::Base -base;
 
 has data => sub { {} };
 
-has update => sub {
+sub update {
     my ( $self, $data ) = @_;
     $self->data->{$_} = $data->{$_} for keys %$data;
-};
+}
 
-has is_active => sub {
+sub is_active {
     shift->data->{'ban_reason'} == 0 ? 1 : 0;
 };
 
-has is_admin => sub {return 1;
+sub is_admin {return 1;
     # 3rd - is default admin's group
     grep { $_ == 3 } split ' ', shift->{'groups'} ? 1 : 0;
 };

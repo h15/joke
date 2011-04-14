@@ -1,32 +1,34 @@
-use strict;
-use warnings;
-
 package Mojolicious::Plugin::Joker;
+use Mojo::Base 'Mojolicious::Plugin';
 
-use base 'Mojolicious::Plugin';
 use Storable 'thaw';
 
 our $VERSION = '0.2';
+
+has [ qw/plugins jokes/ ] => sub { {} };
+has root => './lib/Mojolicious/Plugin/';
+has 'app';
 
 # Will run once.
 sub register {
     my ( $self, $app ) = @_;
     
-    my $session = $app->sessions;
+    $self->app($app);
+    
+    $app->helper ( joker => sub { $self } );
     
     # Preload core plugins.
-    my @preload_modules = qw/message data user i18n/;
+    my @preload = qw/Message Data User/;
+    
     $app->plugin('message');
     $app->plugin('data');
     $app->plugin('i18n');
+    
+    my $session = $app->sessions;
     $app->plugin( 'user' => { id => $session->{'user_id'} } );
     
-    #
-    #   Joker's routes.
-    #
-    
+    # Joker's routes.
     my $route = $app->routes;
-    
     $route->namespace('Mojolicious::Plugin::Joker::Controller');
     
     # Check access
@@ -45,17 +47,12 @@ sub register {
     
     # Read. Show plugin's info.
     $r->route('/:plugin')->via('get')->to('joker#read')->name('joker_read');
-    
     # Update. Only config is changable in plugin's info.
     $r->route('/:plugin')->via('post')->to('joker#update')->name('joker_update');
-    
     # Also you can turn it on or off... after restart application.
     $r->route('/toggle/:plugin')->to('joker#toggle')->name('joker_toggle');
 
-    #
-    #   Plugins.
-    #
-    
+    # Plugins.
     my @plugins = $app->data->read('plugins');
     
     # Change state.
@@ -67,22 +64,24 @@ sub register {
     } @plugins;
     
     $app->data->update(
-        plugins => { state => $_->{'state'} }, { id => $_->{'id'} }
+        plugins => { state => $_->{'state'} }, { name => $_->{'name'} }
     ) for @plugins;
     
     # Load active plugins.
     @plugins = grep { $_->{'state'} == 0b001 } @plugins;
     
-    # Save them in stash.
-    #my $stash = { plugins => { map { $_->{'id'}, $_ } @plugins } };
-    #$app->stash( joker => $stash );
-    #my $jo = $app->stash('joker');
-    #print $app->dumper( $jo );
+    # Save default info of preload modules and active.
+    $self->add( $self->read($_) ) for @preload;
+    
+    for my $plugin ( @plugins ) {
+        $self->add( $self->read($plugin->{'name'}) );
+        $self->add( $plugin );
+    }
     
     # Exclude preload modules.
     my %set;
-    ++$set{ lc $_->{'id'} } for @plugins;
-    delete $set{ lc $_ } for @preload_modules;
+    ++$set{ lc $_->{'name'} } for @plugins;
+    delete $set{ lc $_ } for @preload;
     @plugins = keys %set;
     
     $app->plugin( $_ ) for @plugins;
@@ -108,7 +107,6 @@ sub register {
                 
                 $ret .= "</td></tr>";
             }
-
             return "<table>$ret</table>";
         }
     );
@@ -128,40 +126,105 @@ sub register {
     $app->helper (
         IS => sub {
             my ($self, $type, $val) = @_;
-            
             $self->error( "It's not $type!" ) unless $self->is($type, $val);
         }
     );
 }
 
+sub add {
+    my ( $self, $pairs ) = @_;
+    
+    for ( keys %$pairs ) {
+        $self->jokes->{$_} = $pairs->{$_} if defined $pairs->{$_};
+    }
+}
+
+sub scan {
+    my $self = shift;
+    my $root = $self->root;
+    
+    # Recursive get all files from ROOT.
+    my @dir = <$root*>;
+    my @files;
+    
+    while( @dir ) {
+        my $path = pop @dir;
+        # if file
+        push @files, $path   if -r $path;
+        # if directory
+        push @dir, <$path/*> if -d $path;
+    }
+    
+    my %ret;
+    
+    for my $f ( @files ) {
+        my $pkg  = $self->path2module($f);
+        my $info = $self->read($pkg);
+        %ret = (%ret, $info->{'name'}, $info) if defined $info->{'name'};
+    }
+    
+    return %ret;
+}
+
+sub read {
+    # Get path to module.
+    my ( $self, $module ) = @_;
+    
+    return {} unless $module;
+    
+    # Dynamic load module.
+    # I'll be in Mexico when they'll understand what I did.
+    use lib $module;
+    
+    my $obj = bless {}, $module;
+    
+    my $info = {
+        'version' => $obj->version,
+        'about'   => $obj->about,
+        'depends' => $obj->depends,
+        'config'  => $obj->config
+    } if $obj->can('joke');
+    
+    no lib $module;
+    
+    $module =~ s/^Mojolicious::Plugin:://;
+    
+    # Info can be not defined...
+    if( defined $info ) {
+        $info->{'name'} = $module;
+        return $info;
+    }
+    
+    return {};
+}
+
+sub path2module {
+    my ( $self, $path ) = @_;
+    
+    my @waypoints = split /[\\\/]/, $path;
+    $waypoints[-1] =~ s/\.pm$//i;
+    
+    # Remove "./lib/" from path.
+    return join('::', @waypoints[2..$#waypoints]);
+}
+
 1;
 
 package Mojolicious::Plugin::Joker::Controller::Joker;
+use Mojo::Base 'Mojolicious::Controller';
+
 use Storable qw/freeze thaw/;
-
-use base 'Mojolicious::Controller';
-
-our $ROOT = './lib/Mojolicious/Plugin/';
 
 sub read {
     my $self = shift;
     
-    my $path = $self->param('plugin');
-    $path =~ s/::/\//g;
-    $path = "$ROOT$path.pm";
-    
-    # If module's file does not exist.
-    return $self->error("Cann't read file $path!") unless -r $path;
-    
     # Read joke by file path.
-    my $info = $self->read_joke( $path );
-    
-    # If module has not info.
-    return $self->error("$path doesn't have info.") unless $info;
+    my $info = $self->joker->read( "Mojolicious::Plugin::" . $self->param('plugin') );
+    return $self->error('Wrong plugin!') unless %$info;
     
     # Get plugin's info form db by ID.
     my $plugin = [
-        $self->data->read( plugins => { id => $self->param('plugin') } )
+        $self->data->read( plugins => { name => $self->param('plugin') } )
     ]->[0];
     
     $info->{'state'} = $plugin->{'state'};
@@ -183,15 +246,14 @@ sub read {
 sub list {
     my $self = shift;
     
-    my %jokes = $self->scan;
+    my %jokes = $self->joker->scan;
     
     # Get config form database and push config to joke if joke exists.
     # $self->data->read('plugins') returns array of hashes.
-    
     for my $plugin ( $self->data->read('plugins') ) {
-        if( exists $jokes{ $plugin->{'id'} } ) {
-            $jokes{ $plugin->{'id'} }->{'state'} = $plugin->{'state'};
-            $jokes{ $plugin->{'id'} }->{'config'} = thaw $plugin->{'config'}
+        if( exists $jokes{ $plugin->{'name'} } ) {
+            $jokes{ $plugin->{'name'} }->{'state'} = $plugin->{'state'};
+            $jokes{ $plugin->{'name'} }->{'config'} = thaw $plugin->{'config'}
                 if length $plugin->{'config'};
         }
     }
@@ -208,16 +270,15 @@ sub update {
     # It's not updating running-config (just startup-config).
     my $self = shift;
     
-    my $info = $self->read_joke( $ROOT . $self->param('plugin') );
+    my $info = $self->joker->read( "Mojolicious::Plugin::" . $self->param('plugin') );
     
     # Make new config from params.
     # Add dump of new config into data base.
-    
     upd_conf( $self, $info->{'config'} );
     
     # Insert if row does not exist.
     my @plugins = $self->data->read (
-        plugins => { id => $self->param('plugin') }
+        plugins => { name => $self->param('plugin') }
     );
 
     unless ( $#plugins ) {
@@ -229,13 +290,13 @@ sub update {
                 state   => $plugins[0]->{'state'} | 0b100
             },
             # where
-            { id => $self->param('plugin') }
+            { name => $self->param('plugin') }
         );
     }
     else {
         $self->data->create( plugins =>
             {
-                id      => $self->param('plugin'),
+                name    => $self->param('plugin'),
                 state   => 0b100,
                 config  => freeze( $info->{'config'} )
             }
@@ -267,7 +328,7 @@ sub toggle {
     my $self = shift;
 
     my @plugins = $self->data->read (
-        plugins => { id => $self->param('plugin') }
+        plugins => { name => $self->param('plugin') }
     );
 
     unless ( $#plugins ) {
@@ -276,97 +337,19 @@ sub toggle {
         
         $self->data->update( plugins =>
             { state => $new_state },
-            { id => $self->param('plugin') }
+            { name => $self->param('plugin') }
         );
     }
     else {
         $self->data->create( plugins =>
             {
-                id      => $self->param('plugin'),
+                name      => $self->param('plugin'),
                 state   => 0b010
             }
         );
     }
 
     $self->redirect_to( 'joker_read', plugin => $self->param('plugin') );
-}
-
-sub scan {
-    my $self = shift;
-    
-    # Recursive get all files from $ROOT.
-    my @dir = <$ROOT*>;
-    my @files;
-    
-    while( @dir ) {
-        my $path = pop @dir;
-        
-        # if file
-        push @files, $path   if -r $path;
-        
-        # if directory
-        push @dir, <$path/*> if -d $path;
-    }
-    
-    # Read all service information.
-    my %jokes;
-    
-    for my $joke ( @files ) {
-        my $info = $self->read_joke($joke);
-        
-        # Don't read jokes without info.
-        next unless $info;
-        
-        $jokes{ $info->{'name'} } = $info;
-    }
-    
-    return %jokes;
-}
-
-#
-#   Read module's params such as version, author, conditions.
-#
-
-sub read_joke {
-    # Get path to module.
-    my ( $self, $module ) = @_;
-    
-    return 0 unless $module;
-    
-    # Get module name.
-    $module = path2module($module);
-    
-    # Check info.
-    # Dynamic load module.
-    use lib $module;
-    
-    my $obj = bless {}, $module;
-    
-    my $info = {
-        'version' => $obj->version,
-        'about'   => $obj->about,
-        'depends' => $obj->depends,
-        'config'  => $obj->config
-    } if $obj->can('joke');
-    
-    no lib $module;
-    
-    # Info can be not defined...
-    if( defined $info ) {
-        $info->{'name'} = substr $module, 2 + length path2module($ROOT);
-        return $info;
-    }
-    return 0;
-}
-
-sub path2module {
-    my $path = shift;
-    
-    my @waypoints = split /[\\\/]/, $path;
-    $waypoints[-1] =~ s/\.pm$//i;
-    
-    # Remove "./lib/" from path.
-    return join('::', @waypoints[2..$#waypoints]);
 }
 
 1;
@@ -378,15 +361,15 @@ __END__
 =head2 Plugin table
 
     UNIC varchar 255 | Decimal 1 | Tiny BLOB
-    id               | state(0)  | config
+    name             | state(0)  | config
 
 =head3 For MySQL
 
     CREATE TABLE IF NOT EXISTS `joke__plugins` (
-      `id` varchar(11) CHARACTER SET ascii COLLATE ascii_bin NOT NULL,
+      `name` varchar(11) CHARACTER SET ascii COLLATE ascii_bin NOT NULL,
       `state` int(2) NOT NULL,
       `config` tinytext NOT NULL,
-      UNIQUE KEY `id` (`id`)
+      UNIQUE KEY `id` (`name`)
     ) ENGINE=MyISAM DEFAULT CHARSET=utf8;
 
     state: change-bit | invert-bit | active-bit
