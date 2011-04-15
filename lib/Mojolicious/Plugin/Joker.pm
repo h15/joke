@@ -2,6 +2,7 @@ package Mojolicious::Plugin::Joker;
 use Mojo::Base 'Mojolicious::Plugin';
 
 use Storable 'thaw';
+use Data::Dumper;
 
 our $VERSION = '0.2';
 
@@ -17,8 +18,8 @@ sub register {
     
     $app->helper ( joker => sub { $self } );
     
-    # Preload core plugins.
-    my @preload = qw/Message Data User/;
+    # core core plugins.
+    my @core = qw/Message Data User/;
     
     $app->plugin('message');
     $app->plugin('data');
@@ -63,25 +64,27 @@ sub register {
         $_->{'state'} ^= 0b011 if $_->{'state'} & 0b010;
     } @plugins;
     
+    for my $p ( @core ) {
+        $_->{'name'} eq $p and $_->{'state'} = 0b001 for @plugins;
+    }
+    
     $app->data->update(
         plugins => { state => $_->{'state'} }, { name => $_->{'name'} }
     ) for @plugins;
-    
+
     # Load active plugins.
     @plugins = grep { $_->{'state'} == 0b001 } @plugins;
     
-    # Save default info of preload modules and active.
-    $self->add( $self->read($_) ) for @preload;
-    
+    # Save plugins' info.
     for my $plugin ( @plugins ) {
         $self->add( $self->read($plugin->{'name'}) );
         $self->add( $plugin );
     }
     
-    # Exclude preload modules.
+    # Exclude core modules.
     my %set;
     ++$set{ lc $_->{'name'} } for @plugins;
-    delete $set{ lc $_ } for @preload;
+    delete $set{ lc $_ } for @core;
     @plugins = keys %set;
     
     $app->plugin( $_ ) for @plugins;
@@ -134,9 +137,7 @@ sub register {
 sub add {
     my ( $self, $pairs ) = @_;
     
-    for ( keys %$pairs ) {
-        $self->jokes->{$_} = $pairs->{$_} if defined $pairs->{$_};
-    }
+    $self->jokes->{ $pairs->{'name'} } = $pairs if defined $pairs->{'name'};
 }
 
 sub scan {

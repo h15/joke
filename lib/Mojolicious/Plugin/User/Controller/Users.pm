@@ -43,11 +43,11 @@ sub create {
     #
     #   TODO: Send mail
     #
-    die $self->dumper( $self->joker->jokes );
+    
     $self->data->create( users => {
         mail    => $self->param('mail'),
         regdate => time,
-        confirm_time => time + 86400 * $self->joker->jokes->{'user'}->{'config'}->{'confirm'},
+        confirm_time => time + 86400 * $self->joker->jokes->{'User'}->{'config'}->{'confirm'},
         confirm_key  => $key
     });
     
