@@ -43,7 +43,7 @@ on every dispatch (every request in our case).
 =cut
 
 sub register {
-    my ( $controller, $app ) = @_;
+    my ( $c, $app ) = @_;
     my $self = new Mojolicious::Plugin::User;
     my $user = new Mojolicious::Plugin::User::User;
     
@@ -54,45 +54,34 @@ sub register {
     $app->hook( before_dispatch => sub {
         my $self = shift;
         
-        my $session = $app->sessions;
-        my $id = $session->{'user_id'};
+        my $id = $self->session('user_id');
         # Anonymous has 1st id.
         $id ||= 1;
         
         $user->update( [$self->data->read( users => { id => $id } )]->[0] );
     });
     
-    $app->helper (
-        user => sub { $user }
-    );
+    $app->helper ( user => sub { $user } );
     
     # Routes
-    my $route = $app->routes;
-    my $r = $route->bridge('/user')->to('users#check_access');
-    my $n = 'Mojolicious::Plugin::User::Controller';
+    my $r = $app->routes->route('/user')->to( namespace => 'Mojolicious::Plugin::User::Controller' );
     
-    # User (CRUD+L)
-    $route->route('/user/new')->via('get')->to( cb => sub {
-        shift->render( template => 'users/form' )
-    })->name('users_form');
-    $route->route('/user/:id' , id => qr/\d+/)->via('get')->to('users#read', namespace => $n)->name('users_read');
-    $route->route('/users/:id', id => qr/\d*/)->via('get')->to('users#list', namespace => $n)->name('users_list');
-    $route->route('/user/new')->via('post')->to('users#create', namespace => $n)->name('users_create');
-    $r->route('/:id', id => qr/\d+/)->via('put')->to('users#update', namespace => $n)->name('users_update');
-    $r->route('/:id', id => qr/\d+/)->via('delete')->to('users#delete', namespace => $n)->name('users_delete');
+    # User CRU(+L)D
+    $r->route('/new')->via('post')->to('users#create')->name('users_create');
+    $r->route('/new')->via('get')->to( cb => sub { shift->render( template => 'users/form' ) })->name('users_form');
+    $r->route('/:id', id => qr/\d+/)->via('get')->to('users#read')->name('users_read');
+    $r->route('/list/:id', id => qr/\d*/)->to('users#list')->name('users_list');
+    $r->route('/:id', id => qr/\d+/)->via('put')->to('users#update')->name('users_update');
+    $r->route('/:id', id => qr/\d+/)->via('delete')->to('users#delete')->name('users_delete');
     
-    # Auth (Action)
-    $r->route('/login')->via('post')->to('auths#login', namespace => $n)->name('auths_login');
-    $r->route('/logout')->to('auths#logout', namespace => $n)->name('auths_logout');
-    $route->route('/user/login')->via('get')->to( cb => sub {
-        shift->render( template => 'auths/login_form' )
-    } )->name('auths_login_form');
     # Login by mail:
-    $route->route('/user/login/mail')->via('get')->to( cb => sub {
-        shift->render( template => 'auths/login_mail_form' )
-    } )->name('auths_login_mail_form');
-    $route->route('/user/login/mail')->via('post')->to('auths#login_mail_request', namespace => $n)->name('auths_login_mail_request');
-    $route->route('/user/login/mail/confirm')->to('auths#login_mail', namespace => $n)->name('auths_login_mail');
+    $r->route('/login/mail/confirm')->to('auths#mail_confirm')->name('auths_mail_confirm');
+    $r->route('/login/mail')->via('get')->to( cb => sub { shift->render( template => 'auths/mail_form' ) } )->name('auths_mail_form');
+    $r->route('/login/mail')->via('post')->to('auths#mail_request')->name('auths_mail_request');
+    # Auth Create and Delete regulary and via mail
+    $r->route('/login')->via('get')->to( cb => sub { shift->render( template => 'auths/form' ) } )->name('auths_form');
+    $r->route('/login')->via('post')->to('auths#login')->name('auths_login');
+    $r->route('/logout')->to('auths#logout')->name('auths_logout');
 }
 
 1;

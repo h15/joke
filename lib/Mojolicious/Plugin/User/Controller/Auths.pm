@@ -1,6 +1,5 @@
 package Mojolicious::Plugin::User::Controller::Auths;
-
-use base 'Mojolicious::Controller';
+use Mojo::Base 'Mojolicious::Controller';
 
 sub login {
 	my $self = shift;
@@ -9,7 +8,7 @@ sub login {
 	$self->IS( mail => $self->param('mail')	);
 	
 	# Get accounts by e-mail.
-	my @users = $self->data->read( users => '*', {email => $self->param('mail')} );
+	my @users = $self->data->read( users => { mail => $self->param('mail') } );
     
     # If this e-mail does not exist
     # or more than one account has this e-mail.
@@ -35,13 +34,13 @@ sub logout {
     shift->session( user_id => '' )->redirect_to('index');
 }
 
-sub login_mail_request {
+sub mail_request {
     my $self = shift;
     
 	$self->IS( mail => $self->param('mail') );
 	
     # Get accounts by e-mail.
-	my @users = $self->select( users => '*' => {email => $self->param('mail')} );
+	my @users = $self->data->read( users => {mail => $self->param('mail')} );
     
     # if 0 - all fine
     $self->error( "This e-mail doesn't exist in data base!" ) if $#users;
@@ -66,7 +65,7 @@ sub login_mail_request {
     }); 
 }
 
-sub login_mail {
+sub mail_confirm {
     my $self = shift;
     my $mail = $self->param('mail');
     
@@ -74,11 +73,12 @@ sub login_mail {
         mail => $mail,
         confirm_key => $self->param('key')
     });
+    
     # This pair does not exist.
-    return $self->error('Auth failed!') unless $#users;
+    return $self->error('Auth failed!') if $#users;
     
     # Too late
-    if ( $users[0]->{'confirm_time'} > time + 86400 * $self->user->config->{'confirm'} ) {
+    if ( $users[0]->{'confirm_time'} > time + 86400 * $self->joker->jokes->{'User'}->{'config'}->{'confirm'} ) {
         $self->data->update( user =>
             { confirm_key => '', confirm_time => 0 },
             { mail => $mail }

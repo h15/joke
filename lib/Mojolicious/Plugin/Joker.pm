@@ -33,9 +33,7 @@ sub register {
     $route->namespace('Mojolicious::Plugin::Joker::Controller');
     
     # Check access
-    my $r = $route->bridge('/joker')->to( cb => sub {
-        $app->user->is_admin;
-    } );
+    my $r = $route->bridge('/joker')->to( cb => sub { $app->user->is_admin } );
     
     # List of plugins, which I found in ./lib/Mojolicious/Plugin.
     $r->route('/')->to('joker#list')->name('joker_list');
@@ -135,9 +133,12 @@ sub register {
 }
 
 sub add {
-    my ( $self, $pairs ) = @_;
+    my ( $self, $info ) = @_;
     
-    $self->jokes->{ $pairs->{'name'} } = $pairs if defined $pairs->{'name'};
+    if ( defined $info->{'name'} ) {
+        $self->jokes->{ $info->{'name'} } = $info;
+        $self->jokes->{ $info->{'name'} }->{'config'} = thaw $info->{'config'} if length $info->{'config'};
+    }
 }
 
 sub scan {
