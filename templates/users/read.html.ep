@@ -27,7 +27,15 @@
             <td><%= $user->{'regdate'} %></td>
         </tr><tr>
             <td><%=l 'status' %></td>
-            <td><%=l $user->{'inactive_reason'}? 'inactive':'active' %></td>
+            <td><%=l $user->{'ban_reason'} ? 'inactive' : 'active' %></td>
+% if ( $user->{'ban_reason'} ) {
+        </tr><tr>
+            <td><%=l 'ban reason' %></td>
+            <td><%= $user->{'ban_reason'} %></td>
+        </tr><tr>
+            <td><%=l 'ban time' %></td>
+            <td><%= $user->{'ban_time'} %></td>
+% }
         </tr>
     </table>
 </article>

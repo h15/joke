@@ -1,5 +1,6 @@
 package Mojolicious::Plugin::User::User;
 use Mojo::Base -base;
+use Data::Dumper;
 
 has data => sub { {} };
 
@@ -14,7 +15,12 @@ sub is_active {
 
 sub is_admin {#return 1;
     # 3rd - is default admin's group
-    grep { $_ == 3 } split ' ', shift->{'groups'} ? 1 : 0;
+    my $self = shift;
+    
+    if ( grep { $_ == 3 } split ' ', $self->data->{'groups'} ) {
+        return 1;
+    }
+    return 0;
 };
 
 1;

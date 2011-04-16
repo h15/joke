@@ -73,6 +73,8 @@ sub update {
     
     %q = ( %q, name => $self->param('name') ) if defined $self->param('name') && ! defined $user->{'name'};
     %q = ( %q, mail => $self->param('mail') ) if defined $self->param('mail');
+    %q = ( %q, ban_time => $self->param('ban_time') ) if defined $self->param('ban_time');
+    %q = ( %q, ban_reason => $self->param('ban_reason') ) if defined $self->param('ban_reason');
     
     if ( defined $self->param('pass') && $self->param('pass') eq $self->param('pass2') ) {
         my $s = $user->{'regdate'} . $self->param('pass') . $self->stash('salt');

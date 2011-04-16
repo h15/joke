@@ -49,8 +49,18 @@
             <td><%=l 'registered' %></td>
             <td><%= $user->{'regdate'} %></td>
         </tr><tr>
+            <td><%=l 'ban reason' %></td>
+            <td>
+                <input name=ban_reason value="<%= $user->{'ban_reason'} %>">
+            </td>
+        </tr><tr>
+            <td><%=l 'ban time' %></td>
+            <td>
+                <input name=ban_time value="<%= $user->{'ban_time'} %>">
+            </td>
+        </tr><tr>
             <td><%=l 'status' %></td>
-            <td><%=l $user->{'inactive_reason'}? 'inactive':'active' %></td>
+            <td><%=l $user->{'ban_reason'}? 'inactive':'active' %></td>
         </tr><tr>
             <td colspan=2>
                 <input type=submit>

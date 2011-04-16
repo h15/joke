@@ -12,10 +12,22 @@
   <body>
     <div class=page>
       <nav>
+        <div>
+            <a href="<%= url_for('users_read', id => user->data->{'id'}) %>"><%= user->data->{'name'} %></a>
+% if ( user->data->{'id'} > 1 ) {
+            <a href="<%= url_for('auths_logout') %>"><%=l 'logout' %></a>
+% } else {
+            <a href="<%= url_for('auths_login') %>"><%=l 'login' %></a>
+% }
+        </div>
         %= content_for 'nav'
       </nav>
       <header>
         %= content_for 'header'
+% unless ( user->is_active ) {
+        <div class=info><%=l 'Your account has been blocked.' %>
+            <a href="<%= url_for('auths_logout') %>"><%=l 'logout' %></a></div>
+% }
       </header>
         %= content_for 'body'
       <footer>

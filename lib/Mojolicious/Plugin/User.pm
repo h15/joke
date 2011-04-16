@@ -62,10 +62,17 @@ sub register {
         # Anonymous has 1st id.
         $id ||= 1;
         
+        $app->stash( banned => 0 );
         $user->update( [$self->data->read( users => { id => $id } )]->[0] );
+        
+        unless ( $user->is_active ) {
+            my $ban = $user->data->{'ban_reason'};
+            $user->update( [$self->data->read( users => { id => 1 } )]->[0] );
+            $user->data->{'ban_reason'} = $ban;
+        }
     });
     
-    $app->helper ( user => sub { $user } );
+    $app->helper( user => sub { $user } );
     
     $app->stash( salt => $app->joker->jokes->{'User'}->{'config'}->{'salt'} );
     
