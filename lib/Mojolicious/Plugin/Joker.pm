@@ -175,8 +175,7 @@ sub read {
     return {} unless $module;
     
     # Dynamic load module.
-    # I'll be in Mexico when they'll understand what I did.
-    use lib $module;
+    eval "require $module";
     
     my $obj = bless {}, $module;
     
@@ -184,10 +183,11 @@ sub read {
         'version' => $obj->version,
         'about'   => $obj->about,
         'depends' => $obj->depends,
-        'config'  => $obj->config
+        'config'  => $obj->config,
+        'state'   => 0
     } if $obj->can('joke');
     
-    no lib $module;
+    eval "no $module";
     
     $module =~ s/^Mojolicious::Plugin:://;
     
