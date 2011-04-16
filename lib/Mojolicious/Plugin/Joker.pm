@@ -345,7 +345,7 @@ sub toggle {
     else {
         $self->data->create( plugins =>
             {
-                name      => $self->param('plugin'),
+                name    => $self->param('plugin'),
                 state   => 0b010
             }
         );

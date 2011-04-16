@@ -7,6 +7,7 @@
 % end
 
 % content_for header => begin
+    <h1><%=l 'Profile' %> <%= $user->{'name'} %></h1>
 % end
 
 % content_for footer => begin
@@ -14,25 +15,20 @@
 
 %= content body => begin
 <article class=page>
-    <div class="center rounded user">
-        <table class="aligncenter">
-            <tr>
-                <td><%=l 'id' %></td>
-                <td><%= $user->{'id'} %></td>
-            </tr>
-            <tr>
-                <td><%=l 'name' %></td>
-                <td><%= $user->{'name'} %></td>
-            </tr>
-            <tr>
-                <td><%=l 'registered' %></td>
-                <td><%= $user->{'regdate'} %></td>
-            </tr>
-            <tr>
-                <td><%=l 'status' %></td>
-                <td><%=l $user->{'inactive_reason'}? 'inactive':'active' %></td>
-            </tr>
-        </table>
-    </div>
+    <table rules=rows>
+        <tr>
+            <td><%=l 'id' %></td>
+            <td><%= $user->{'id'} %></td>
+        </tr><tr>
+            <td><%=l 'name' %></td>
+            <td><%= $user->{'name'} %></td>
+        </tr><tr>
+            <td><%=l 'registered' %></td>
+            <td><%= $user->{'regdate'} %></td>
+        </tr><tr>
+            <td><%=l 'status' %></td>
+            <td><%=l $user->{'inactive_reason'}? 'inactive':'active' %></td>
+        </tr>
+    </table>
 </article>
 % end

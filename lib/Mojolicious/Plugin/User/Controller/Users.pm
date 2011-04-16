@@ -13,21 +13,19 @@ sub read {
         && ( $self->param('id') == $self->user->data->{'id'}    # and Self
              || $self->user->is_admin()                         #   or Admin.
         ) ) {
-        $self->read_extended(@users);
+        $self->read_extended($users[0]);
     }
-
-    $self->stash( user => $users[0] );
-
-    $self->render;
+    else {
+        $self->stash( user => $users[0] );
+        $self->render;
+    }
 }
 
 sub read_extended {
-    my $self = shift;
-    my @users = @_;
+    my ( $self, $user ) = @_;
     
-    $self->render(
-        action => 'read_extended',
-    );
+    $self->stash( user => $user );
+    $self->render( action => 'read_extended' );
 }
 
 sub create {
@@ -51,6 +49,42 @@ sub create {
     });
     
     $self->done('Check your mail.');
+}
+
+sub update {
+    my $self = shift;
+    
+	# Get accounts by id.
+	my @users = $self->data->read( users => { id => $self->stash('id') } );
+	
+    $self->error("User with this id doesn't exist!") if $#users;
+    
+    my $user = $users[0];
+    
+    unless ( $self->user->data->{'id'} != 1
+        && ( $self->param('id') == $self->user->data->{'id'}
+            || $self->user->is_admin()
+        ) ) {
+        return $self->error("Permission denied!")
+    }
+    
+    # Parse query.
+    my %q;
+    
+    %q = ( %q, name => $self->param('name') ) if defined $self->param('name') && ! defined $user->{'name'};
+    %q = ( %q, mail => $self->param('mail') ) if defined $self->param('mail');
+    
+    if ( defined $self->param('pass') && $self->param('pass') eq $self->param('pass2') ) {
+        my $s = $user->{'regdate'} . $self->param('pass') . $self->stash('salt');
+        %q = ( %q, password => Digest::MD5::md5_hex($s) )
+    }
+    
+    $self->data->update( users =>
+        \%q,
+        { id => $self->stash('id') }
+    );
+    
+    $self->redirect_to( 'users_read', id => $self->stash('id') );
 }
 
 1;

@@ -9,7 +9,11 @@ use Mojolicious::Plugin::User::User;
 has version => 0.2;
 has about   => 'Plugin for Users system.';
 has depends => sub { [ qw/Data Message Mail/ ] };
-has config  => sub { { cookies => 'some random string', confirm => 7 } };
+has config  => sub {{
+    cookies => 'some random string',
+    confirm => 7,
+    salt    => '',
+}};
 
 has joke => sub { 1 };
 
@@ -63,6 +67,8 @@ sub register {
     
     $app->helper ( user => sub { $user } );
     
+    $app->stash( salt => $app->joker->jokes->{'User'}->{'config'}->{'salt'} );
+    
     # Routes
     my $r = $app->routes->route('/user')->to( namespace => 'Mojolicious::Plugin::User::Controller' );
     
@@ -71,7 +77,7 @@ sub register {
     $r->route('/new')->via('get')->to( cb => sub { shift->render( template => 'users/form' ) })->name('users_form');
     $r->route('/:id', id => qr/\d+/)->via('get')->to('users#read')->name('users_read');
     $r->route('/list/:id', id => qr/\d*/)->to('users#list')->name('users_list');
-    $r->route('/:id', id => qr/\d+/)->via('put')->to('users#update')->name('users_update');
+    $r->route('/:id', id => qr/\d+/)->via('post')->to('users#update')->name('users_update');
     $r->route('/:id', id => qr/\d+/)->via('delete')->to('users#delete')->name('users_delete');
     
     # Login by mail:
@@ -79,8 +85,8 @@ sub register {
     $r->route('/login/mail')->via('get')->to( cb => sub { shift->render( template => 'auths/mail_form' ) } )->name('auths_mail_form');
     $r->route('/login/mail')->via('post')->to('auths#mail_request')->name('auths_mail_request');
     # Auth Create and Delete regulary and via mail
-    $r->route('/login')->via('get')->to( cb => sub { shift->render( template => 'auths/form' ) } )->name('auths_form');
     $r->route('/login')->via('post')->to('auths#login')->name('auths_login');
+    $r->route('/login')->via('get')->to( cb => sub { shift->render( template => 'auths/form' ) } )->name('auths_form');
     $r->route('/logout')->to('auths#logout')->name('auths_logout');
 }
 

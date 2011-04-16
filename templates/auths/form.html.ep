@@ -14,7 +14,7 @@
 
 %= content body => begin
 <article class=page>
-    <form method=post action="<%= url_for('users_login') %>">
+    <form method=post action="<%= url_for('auths_login') %>">
 	    <table class="center rounded">
 	        <tr>
 	            <td>
@@ -36,7 +36,7 @@
 	            <td>
 	            </td>
 	            <td>
-	                <input type=submit value="<%=l 'send' %>" class="alignright">
+	                <input type=submit class="alignright">
 	            </td>
 	        </tr>
 	    </table>

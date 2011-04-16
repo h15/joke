@@ -10,15 +10,17 @@
     </title>
   </head>
   <body>
-    <nav>
-      %= content_for 'nav'
-    </nav>
-    <header>
-      %= content_for 'header'
-    </header>
-      %= content_for 'body'
-    <footer>
-      %= content_for 'footer'
-    </footer>
+    <div class=page>
+      <nav>
+        %= content_for 'nav'
+      </nav>
+      <header>
+        %= content_for 'header'
+      </header>
+        %= content_for 'body'
+      <footer>
+        %= content_for 'footer'
+      </footer>
+    </div>
   </body>
 </html>

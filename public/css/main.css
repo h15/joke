@@ -14,6 +14,7 @@ body {
     padding:0px;
     margin:0px;
     font-family: Sans-Serif,'Lucida Grande';
+    color:#444;
     font-size: 14px;
 }
 
@@ -25,6 +26,23 @@ img {
     border:0px;
 }
 
+dl {
+    width:240px;
+    display:block;
+}
+
+dd, dt {
+    padding:0px;
+    margin:0px;
+	width: 100px;
+    height: 26px;
+    background: #eee;
+}
+
+dd { float: right; }
+
+dt { float:left; }
+
 /***************
  * HTML5
  ***************/
@@ -33,11 +51,24 @@ nav, header, article, footer {
     display: block;
 }
 
+body header h1 {
+    color:#bbb;
+    border-bottom:3px solid #ddd;
+}
+
 footer {
     text-align: center;
     color: #aaa;
     font-style:italic;
     padding:5px;
+}
+
+article.page {
+    padding:0px 10px 0px 10px;
+}
+
+article.page td {
+    padding: 5px;
 }
 
 .page {
