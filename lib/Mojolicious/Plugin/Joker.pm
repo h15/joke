@@ -95,7 +95,7 @@ sub register {
     	# Recursive build html tables for config structure.
         html_hash_tree => sub {
             my ( $self, $config, $parent ) = @_;
-            my $ret;
+            my $ret = '';
             $parent ||= '';
             
             for my $k ( keys %$config ) {
@@ -184,7 +184,6 @@ sub read {
         'about'   => $obj->about,
         'depends' => $obj->depends,
         'config'  => $obj->config,
-        'state'   => 0
     } if $obj->can('joke');
     
     eval "no $module";
@@ -192,8 +191,9 @@ sub read {
     $module =~ s/^Mojolicious::Plugin:://;
     
     # Info can be not defined...
-    if( defined $info ) {
+    if( defined $info->{'version'} ) {
         $info->{'name'} = $module;
+        $info->{'state'} ||= 0;
         return $info;
     }
     
@@ -229,12 +229,12 @@ sub read {
         $self->data->read( plugins => { name => $self->param('plugin') } )
     ]->[0];
     
-    $info->{'state'} = $plugin->{'state'};
+    $info->{'state'} = $plugin->{'state'} if defined $plugin->{'state'};
     # Replace default config if it's defined in db.
     $info->{'config'} = thaw $plugin->{'config'} if length $plugin->{'config'};
     
     $self->stash(
-        jokes => $info,
+        plugin => $info,
         title => $info->{'name'}
     );
 

@@ -1,6 +1,6 @@
 % extends 'base';
 % content_for title => begin
-    Joker &rarr; <%= $self->stash('plugin') %>
+    Joker &rarr; <%= $title %>
 % end
 
 % content_for nav => begin
@@ -14,7 +14,6 @@
 % end
 
 % content_for body => begin
-% my $plugin = $self->stash('jokes');
 %
 % my $active = $plugin->{'state'} & 0b001;
 % my $invert = $plugin->{'state'} & 0b010;
