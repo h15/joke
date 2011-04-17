@@ -14,7 +14,7 @@ has config  => sub { {
     }
 } };
 
-has joke => sub { 1 };
+sub joke {};
 
 sub register {
     my ( $self, $app ) = @_;

@@ -179,12 +179,16 @@ sub read {
     
     my $obj = bless {}, $module;
     
-    my $info = {
-        'version' => $obj->version,
-        'about'   => $obj->about,
-        'depends' => $obj->depends,
-        'config'  => $obj->config,
-    } if $obj->can('joke');
+    my $info;
+    
+    if ( $obj->can('joke') ) {
+        $info = {
+            'version' => $obj->version,
+            'about'   => $obj->about,
+            'depends' => $obj->depends,
+            'config'  => $obj->config,
+        };
+    }
     
     eval "no $module";
     
@@ -273,6 +277,11 @@ sub update {
     my $self = shift;
     
     my $info = $self->joker->read( "Mojolicious::Plugin::" . $self->param('plugin') );
+    my $db = [ $self->data->read( plugins => { name => $self->param('plugin') } ) ]->[0];
+    
+    for ( keys %$db ) {
+        %$info = ( %$info, $_, $db->{$_} ) if defined $db->{$_} && ! defined $info->{$_};
+    }
     
     # Make new config from params.
     # Add dump of new config into data base.

@@ -4,7 +4,7 @@
     <meta charset=utf-8>
     %= stylesheet '/css/main.css'
     %= javascript '/js/main.js'
-    <link rel=icon href=favicon.ico sizes="32x32" type="image/png">
+    <link rel=icon href="/favicon.ico" sizes="32x32" type="image/png">
     <title>
       %= content_for 'title'
     </title>
