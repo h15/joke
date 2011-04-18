@@ -27,7 +27,7 @@ sub register {
 	        { name => 'Captcha' }
 	    );
 	}
-	else {die;
+	else {
 	    $conf = $captcha->config->{'config'};
 	}
 	# end

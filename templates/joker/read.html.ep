@@ -83,10 +83,6 @@
 % }
             </td>
         </tr>
-        <tr>
-            <td>author</td>
-            <td><%= $plugin->{'author'} %></td>
-        </tr>
     </table>
 </div>
 </article>
