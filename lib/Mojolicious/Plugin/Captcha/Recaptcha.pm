@@ -10,13 +10,13 @@ sub register {
 	my $conf;
 	
 	# For Joke.
-	unless ( defined $captcha->config->{'conf'}->{'public_key'} &&
-	         defined $captcha->config->{'conf'}->{'private_key'} ) {
+	unless ( defined $captcha->config->{'config'}->{'public_key'} &&
+	         defined $captcha->config->{'config'}->{'private_key'} ) {
 	    
-	    %{$captcha->config->{'conf'}} = (%{$captcha->config->{'conf'}}, public_key => '', private_key => '');
+	    %{$captcha->config->{'config'}} = (%{$captcha->config->{'config'}}, public_key => '', private_key => '');
 	}
 	else {
-	    $conf = $captcha->config->{'conf'};
+	    $conf = $captcha->config->{'config'};
 	}
 	# end
 	

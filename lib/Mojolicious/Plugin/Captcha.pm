@@ -6,23 +6,27 @@ use Storable 'freeze';
 has version => 0.1;
 has about   => 'Prevent bots attack.';
 has depends => sub { [] };
-has config  => sub { { driver => "recaptcha", conf => {} } };
+has config  => sub { { sub_plugin => "Recaptcha", config => {} } };
 
-sub joke {};
+sub joke {
+    my ( $self, $app ) = @_;
+    
+    $app->plugins->namespaces(['Mojolicious::Plugin::Captcha']);
+
+    $app->plugin( lc $self->config->{'sub_plugin'}, $self );
+}
 
 sub register {
     my ( $self, $app ) = @_;
     
-    $app->plugins()->namespaces(['Mojolicious::Plugin::Captcha']);
-
-    $app->plugin( $self->config->{'driver'}, $self );
+    $self->joke( $app );
     
-    $app->data->update( plugins =>
-        # fields
-        { config  => freeze( $self->config ) },
-        # where
-        { name => 'Captcha' }
-    );
+#    $app->data->update( plugins =>
+#        # fields
+#        { config  => freeze( $self->config ) },
+#        # where
+#        { name => 'Captcha' }
+#    );
 }
 
 1;

@@ -5,8 +5,8 @@ has version => 0.1;
 has about   => 'Data bases\' interface.';
 has depends => sub { [ qw/Message/ ] };
 has config  => sub { {
-    driver => "Sql",
-    auth   => {
+    sub_plugin => "Sql",
+    config     => {
         host    => 'dbi:mysql:joker',
         user    => 'joker',
         passwd  => 'fSZs4hCZusneJcbB',
@@ -43,9 +43,9 @@ use Module::Load;
 sub new {
     my ( $self, $conf ) = @_;
     
-    my $class = "Mojolicious::Plugin::Data::" . $conf->{'driver'};
+    my $class = "Mojolicious::Plugin::Data::" . $conf->{'sub_plugin'};
     load $class;
-    my $drv = $class->new( $conf->{'auth'} );
+    my $drv = $class->new( $conf->{'config'} );
     
     # If data base driver init failed.
     return 0 unless $drv;

@@ -2,7 +2,6 @@ package Mojolicious::Plugin::Joker;
 use Mojo::Base 'Mojolicious::Plugin';
 
 use Storable 'thaw';
-use Data::Dumper;
 
 our $VERSION = '0.2';
 
@@ -182,11 +181,13 @@ sub read {
     my $info;
     
     if ( $obj->can('joke') ) {
+        $obj->joke( $self->app );
+        
         $info = {
-            'version' => $obj->version,
-            'about'   => $obj->about,
-            'depends' => $obj->depends,
-            'config'  => $obj->config,
+            version => $obj->version,
+            about   => $obj->about,
+            depends => $obj->depends,
+            config  => $obj->config,
         };
     }
     
@@ -220,6 +221,7 @@ package Mojolicious::Plugin::Joker::Controller::Joker;
 use Mojo::Base 'Mojolicious::Controller';
 
 use Storable qw/freeze thaw/;
+use Data::Dumper;
 
 sub read {
     my $self = shift;
@@ -277,11 +279,6 @@ sub update {
     my $self = shift;
     
     my $info = $self->joker->read( "Mojolicious::Plugin::" . $self->param('plugin') );
-    my $db = [ $self->data->read( plugins => { name => $self->param('plugin') } ) ]->[0];
-    
-    for ( keys %$db ) {
-        %$info = ( %$info, $_, $db->{$_} ) if defined $db->{$_} && ! defined $info->{$_};
-    }
     
     # Make new config from params.
     # Add dump of new config into data base.
@@ -316,8 +313,7 @@ sub update {
         
     $self->redirect_to( 'joker_read', plugin => $self->param('plugin') );
     
-    #   Recursive make new config.
-    
+    # Recursive make new config.
     sub upd_conf {
         my ( $self, $conf, $parent ) = @_;
         
