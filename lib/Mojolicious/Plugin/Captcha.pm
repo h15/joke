@@ -1,7 +1,7 @@
 package Mojolicious::Plugin::Captcha;
 use Mojo::Base 'Mojolicious::Plugin';
 
-use Storable 'freeze';
+use Storable 'thaw';
 
 has version => 0.1;
 has about   => 'Prevent bots attack.';
@@ -11,9 +11,8 @@ has config  => sub { { sub_plugin => "Recaptcha", config => {} } };
 sub joke {
     my ( $self, $app ) = @_;
     
-    $app->plugins->namespaces(['Mojolicious::Plugin::Captcha']);
-
-    $app->plugin( lc $self->config->{'sub_plugin'}, $self );
+    my $plugin = [ $app->data->read( plugins => { name => 'Captcha' } ) ]->[0];
+    $self->config( thaw $plugin->{'config'} ) if length $plugin->{'config'};
 }
 
 sub register {
@@ -21,12 +20,8 @@ sub register {
     
     $self->joke( $app );
     
-#    $app->data->update( plugins =>
-#        # fields
-#        { config  => freeze( $self->config ) },
-#        # where
-#        { name => 'Captcha' }
-#    );
+    $app->plugins->namespaces(['Mojolicious::Plugin::Captcha']);
+    $app->plugin( lc $self->config->{'sub_plugin'}, $self );
 }
 
 1;

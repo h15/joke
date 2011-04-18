@@ -4,6 +4,8 @@ use Mojo::Base 'Mojolicious::Controller';
 sub login {
 	my $self = shift;
 	
+	return $self->error('CAPTCHA test failed.') unless $self->captcha;
+	
 	# It's not an e-mail!
 	$self->IS( mail => $self->param('mail')	);
 	
@@ -36,6 +38,8 @@ sub logout {
 
 sub mail_request {
     my $self = shift;
+    
+    return $self->error('CAPTCHA test failed.') unless $self->captcha;
     
 	$self->IS( mail => $self->param('mail') );
 	

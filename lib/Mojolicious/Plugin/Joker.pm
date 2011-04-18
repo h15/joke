@@ -15,7 +15,7 @@ sub register {
     
     $self->app($app);
     
-    $app->helper ( joker => sub { $self } );
+    $app->helper( joker => sub { $self } );
     
     # core core plugins.
     my @core = qw/Message Data User/;

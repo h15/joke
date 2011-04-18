@@ -89,8 +89,8 @@ sub register {
     
     # Login by mail:
     $r->route('/login/mail/confirm')->to('auths#mail_confirm')->name('auths_mail_confirm');
-    $r->route('/login/mail')->via('get')->to( cb => sub { shift->render( template => 'auths/mail_form' ) } )->name('auths_mail_form');
     $r->route('/login/mail')->via('post')->to('auths#mail_request')->name('auths_mail_request');
+    $r->route('/login/mail')->via('get')->to( cb => sub { shift->render( template => 'auths/mail_form' ) } )->name('auths_mail_form');
     # Auth Create and Delete regulary and via mail
     $r->route('/login')->via('post')->to('auths#login')->name('auths_login');
     $r->route('/login')->via('get')->to( cb => sub { shift->render( template => 'auths/form' ) } )->name('auths_form');

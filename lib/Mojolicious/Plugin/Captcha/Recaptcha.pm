@@ -2,6 +2,7 @@ package Mojolicious::Plugin::Captcha::Recaptcha;
 use Mojo::Base 'Mojolicious::Plugin';
 
 use Mojo::ByteStream;
+use Storable 'freeze';
 
 our $VERSION = '0.2';
 
@@ -13,9 +14,20 @@ sub register {
 	unless ( defined $captcha->config->{'config'}->{'public_key'} &&
 	         defined $captcha->config->{'config'}->{'private_key'} ) {
 	    
-	    %{$captcha->config->{'config'}} = (%{$captcha->config->{'config'}}, public_key => '', private_key => '');
+	    $app->data->update( plugins =>
+	        {
+	            config => freeze {
+	                sub_plugin => 'Recaptcha',
+	                config => {
+	                    public_key  => '',
+	                    private_key => ''
+	                }
+	            }
+            },
+	        { name => 'Captcha' }
+	    );
 	}
-	else {
+	else {die;
 	    $conf = $captcha->config->{'config'};
 	}
 	# end

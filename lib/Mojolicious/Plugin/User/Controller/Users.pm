@@ -31,6 +31,8 @@ sub read_extended {
 sub create {
     my $self = shift;
     
+    return $self->error('CAPTCHA test failed.') unless $self->captcha;
+    
     my $key = Digest::MD5::md5_hex(rand);
     
     my @users = $self->data->read( users => {mail => $self->param('mail')} );
