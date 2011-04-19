@@ -14,7 +14,7 @@
 % end
 
 % content_for body => begin
-%
+% my $plugin = $joke;
 % my $active = $plugin->{'state'} & 0b001;
 % my $invert = $plugin->{'state'} & 0b010;
 % my $change = $plugin->{'state'} & 0b100;
@@ -48,7 +48,7 @@
         <tr>
             <td>about</td>
             <td><%= $plugin->{'about'} %>
-                <a href=<%= url_for('joker_toggle', plugin => $plugin->{'name'}) %>>
+                <a href=<%= url_for('joker_toggle', joke => $plugin->{'name'}) %>>
                     Turn it <%= ($active xor $invert) ? 'off' : 'on' %>
                 </a>
             </td>
@@ -64,7 +64,7 @@
 %#          LIST OF DEPS
 %#
 % for my $dep ( @{$plugin->{'depends'}} ) {
-    <a href="<%= url_for('joker_read', plugin => $dep)%>"><%= $dep %></a>&nbsp;
+    <a href="<%= url_for('joker_read', joke => $dep)%>"><%= $dep %></a>&nbsp;
 % }
             </td>
         </tr>
@@ -72,7 +72,7 @@
             <td>config</td>
             <td>
 % if ( keys %{$plugin->{'config'}} ) {
-<form action="<%= url_for('joker_update', plugin => $plugin->{'name'}) %>"
+<form action="<%= url_for('joker_update', joke => $plugin->{'name'}) %>"
     method=POST>
 %== html_hash_tree( $plugin->{'config'} );
     <input type="submit" class="alignright">

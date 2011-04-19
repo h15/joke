@@ -19,12 +19,8 @@ sub register {
 	);
 	
 	# clean up Captcha db
-	$app->data->update(
-	    plugins => {
-	        config => freeze {
-	            sub_plugin => 'Simple'
-	        }
-	    },
+	$app->data->update( jokes =>
+	    { config => freeze { sub_plugin => 'Simple' } },
 	    { name => 'Captcha' }
 	);
 	

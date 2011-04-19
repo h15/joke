@@ -14,7 +14,7 @@ sub register {
 	unless ( defined $captcha->config->{'config'}->{'public_key'} &&
 	         defined $captcha->config->{'config'}->{'private_key'} ) {
 	    
-	    $app->data->update( plugins =>
+	    $app->data->update( jokes =>
 	        {
 	            config => freeze {
 	                sub_plugin => 'Recaptcha',

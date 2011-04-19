@@ -3,93 +3,35 @@ use Mojo::Base 'Mojolicious::Plugin';
 
 use Storable 'thaw';
 
-our $VERSION = '0.2';
+our $VERSION = 0.2;
 
-has [ qw/plugins jokes/ ] => sub { {} };
-has root => './lib/Mojolicious/Plugin/';
+has jokes => sub { {} };
+has core  => sub { [qw/Message Data User I18n/] };
+has root  => './lib/Mojolicious/Plugin/';
 has 'app';
 
 # Will run once.
 sub register {
     my ( $self, $app ) = @_;
     
+    # Some init
     $self->app($app);
-    
     $app->helper( joker => sub { $self } );
+    $app->plugin( lc $_ ) for @{$self->core};
     
-    # core core plugins.
-    my @core = qw/Message Data User/;
-    
-    $app->plugin('message');
-    $app->plugin('data');
-    $app->plugin('i18n');
-    
-    my $session = $app->sessions;
-    $app->plugin( 'user' => { id => $session->{'user_id'} } );
-    
-    # Joker's routes.
-    my $route = $app->routes;
-    $route->namespace('Mojolicious::Plugin::Joker::Controller');
-    
-    # Check access
+    # Routes
+    my $route = $app->routes->namespace('Mojolicious::Plugin::Joker::Controller');
     my $r = $route->bridge('/joker')->to( cb => sub { $app->user->is_admin } );
     
-    # List of plugins, which I found in ./lib/Mojolicious/Plugin.
+    # List, Read, Update, Turn 
     $r->route('/')->to('joker#list')->name('joker_list');
+    $r->route('/:joke')->via('get')->to('joker#read')->name('joker_read');
+    $r->route('/:joke')->via('post')->to('joker#update')->name('joker_update');
+    $r->route('/toggle/:joke')->to('joker#toggle')->name('joker_toggle');
     
-    # Plugin's CRUD
-    # =============
-    # To "create" plugin, you need move it in plugin's directory.
-    # To "delete" it, you need remove its file form plugin's directory,
-    # but it does not purge configuration.
+    $self->wake_up;
     
-    # Read. Show plugin's info.
-    $r->route('/:plugin')->via('get')->to('joker#read')->name('joker_read');
-    # Update. Only config is changable in plugin's info.
-    $r->route('/:plugin')->via('post')->to('joker#update')->name('joker_update');
-    # Also you can turn it on or off... after restart application.
-    $r->route('/toggle/:plugin')->to('joker#toggle')->name('joker_toggle');
-
-    # Plugins.
-    my @plugins = $app->data->read('plugins');
-    
-    # Change state.
-    map {
-        # Annul change-bit.
-        $_->{'state'} &= 0b011;
-        # Invert active-bit if invert-bit is 1.
-        $_->{'state'} ^= 0b011 if $_->{'state'} & 0b010;
-    } @plugins;
-    
-    for my $p ( @core ) {
-        $_->{'name'} eq $p and $_->{'state'} = 0b001 for @plugins;
-    }
-    
-    $app->data->update(
-        plugins => { state => $_->{'state'} }, { name => $_->{'name'} }
-    ) for @plugins;
-
-    # Load active plugins.
-    @plugins = grep { $_->{'state'} == 0b001 } @plugins;
-    
-    # Save plugins' info.
-    for my $plugin ( @plugins ) {
-        $self->add( $self->read($plugin->{'name'}) );
-        $self->add( $plugin );
-    }
-    
-    # Exclude core modules.
-    my %set;
-    ++$set{ lc $_->{'name'} } for @plugins;
-    delete $set{ lc $_ } for @core;
-    @plugins = keys %set;
-    
-    $app->plugin( $_ ) for @plugins;
-    
-	#
-	#   Helpers.
-	#
-	
+	# Helpers
     $app->helper (
     	# Recursive build html tables for config structure.
         html_hash_tree => sub {
@@ -101,10 +43,10 @@ sub register {
                 $ret .= "<tr><td>$k</td><td name='$parent-$k'>";
                 
                 # Branch or leaf?
-                $ret .= ref $config->{$k} ?
+                $ret .= ( ref $config->{$k} ?
                     $self->html_hash_tree( $config->{$k}, "$parent-$k" ) :
-                    "<input value='" . $config->{$k} . "' name='$parent-$k-input'>";
-                
+                    "<input value='" . $config->{$k} . "' name='$parent-$k-input'>"
+                );
                 $ret .= "</td></tr>";
             }
             return "<table>$ret</table>";
@@ -118,7 +60,6 @@ sub register {
             if  ( $type eq 'mail' ) {
                 return 1 if $val =~ m/^[a-z0-9_\-.]+@[a-z0-9_\-.]+$/i;
             }
-
             return 0;
         }
     );
@@ -131,13 +72,39 @@ sub register {
     );
 }
 
-sub add {
-    my ( $self, $info ) = @_;
+sub wake_up {
+    my ( $self ) = @_;
     
-    if ( defined $info->{'name'} ) {
-        $self->jokes->{ $info->{'name'} } = $info;
-        $self->jokes->{ $info->{'name'} }->{'config'} = thaw $info->{'config'} if length $info->{'config'};
+    # Read all joke's accounts in data base.
+    my %jokes = map { $_->{name}, $_ } $self->app->data->read('jokes'); 
+    
+    # Change state.
+    for ( keys %jokes ) {
+        # Annul change-bit.
+        $jokes{$_}->{state} &= 0b011;
+        # Invert active-bit if invert-bit is 1.
+        $jokes{$_}->{state} ^= 0b011 if $jokes{$_}->{state} & 0b010;
     }
+    
+    $self->app->data->update( jokes =>
+        { state => $jokes{$_}->{state} },
+        { name => $_ }
+    ) for keys %jokes;
+    
+    # Load only active or core jokes.
+    $jokes{$_}->{state} = 0b001 for $self->core;
+    
+    for ( keys %jokes ) {
+        delete $jokes{$_}, next if $jokes{$_}->{state} != 0b001;
+        
+        $self->jokes->{$_} = $self->read($_);
+        $self->jokes->{$_}->{config} = thaw $jokes{$_}->{config} if defined $jokes{$_}->{config} && length $jokes{$_}->{config};
+        $self->jokes->{$_}->{config} ||= {};
+    }
+    
+    # Joke, repeated twice, doubly funny. But...
+    delete $jokes{$_} for $self->core;
+    $self->app->plugin( lc $_ ) for keys %jokes;
 }
 
 sub scan {
@@ -159,46 +126,29 @@ sub scan {
     my %ret;
     
     for my $f ( @files ) {
-        my $pkg  = $self->path2module($f);
-        my $info = $self->read($pkg);
-        %ret = (%ret, $info->{'name'}, $info) if defined $info->{'name'};
+        my $info = $self->read( $self->path2module($f) );
+        %ret = (%ret, $info->{name}, $info) if defined $info->{name};
     }
     
     return %ret;
 }
 
 sub read {
-    # Get path to module.
     my ( $self, $module ) = @_;
     
     return {} unless $module;
     
     # Dynamic load module.
     eval "require $module";
-    
     my $obj = bless {}, $module;
-    
-    my $info;
-    
-    if ( $obj->can('joke') ) {
-        $obj->joke( $self->app );
-        
-        $info = {
-            version => $obj->version,
-            about   => $obj->about,
-            depends => $obj->depends,
-            config  => $obj->config,
-        };
-    }
-    
+    my $info = $obj->joke( $self->app ) if $obj->can('joke') ;
     eval "no $module";
     
-    $module =~ s/^Mojolicious::Plugin:://;
-    
     # Info can be not defined...
-    if( defined $info->{'version'} ) {
-        $info->{'name'} = $module;
-        $info->{'state'} ||= 0;
+    if ( defined $info->{version} ) {
+        $module =~ s/^Mojolicious::Plugin:://;
+        $info->{name} = $module;
+        $info->{state} ||= 0;
         return $info;
     }
     
@@ -221,48 +171,37 @@ package Mojolicious::Plugin::Joker::Controller::Joker;
 use Mojo::Base 'Mojolicious::Controller';
 
 use Storable qw/freeze thaw/;
-use Data::Dumper;
 
 sub read {
     my $self = shift;
     
-    # Read joke by file path.
-    my $info = $self->joker->read( "Mojolicious::Plugin::" . $self->param('plugin') );
-    return $self->error('Wrong plugin!') unless %$info;
+    my $info = $self->joker->read( "Mojolicious::Plugin::" . $self->param('joke') );
+    return $self->error('Wrong joke!') unless %$info;
     
-    # Get plugin's info form db by ID.
-    my $plugin = [
-        $self->data->read( plugins => { name => $self->param('plugin') } )
-    ]->[0];
+    # Get joke's info form db by NAME.
+    my $joke = [ $self->data->read( jokes => { name => $self->param('joke') } ) ]->[0];
     
-    $info->{'state'} = $plugin->{'state'} if defined $plugin->{'state'};
-    # Replace default config if it's defined in db.
-    $info->{'config'} = thaw $plugin->{'config'} if length $plugin->{'config'};
+    $info->{state} = $joke->{state} if defined $joke->{state};
+    $info->{config} = thaw $joke->{config} if length $joke->{config};
     
-    $self->stash(
-        plugin => $info,
-        title => $info->{'name'}
+    $self->stash (
+        joke => $info,
+        title => $info->{name}
     );
 
     $self->render;
 }
-
-#
-#   List of plugins.
-#
 
 sub list {
     my $self = shift;
     
     my %jokes = $self->joker->scan;
     
-    # Get config form database and push config to joke if joke exists.
-    # $self->data->read('plugins') returns array of hashes.
-    for my $plugin ( $self->data->read('plugins') ) {
-        if( exists $jokes{ $plugin->{'name'} } ) {
-            $jokes{ $plugin->{'name'} }->{'state'} = $plugin->{'state'};
-            $jokes{ $plugin->{'name'} }->{'config'} = thaw $plugin->{'config'}
-                if length $plugin->{'config'};
+    # State, config from db.
+    for my $joke ( $self->data->read('jokes') ) {
+        if( exists $jokes{ $joke->{name} } ) {
+            $jokes{ $joke->{name} }->{state} = $joke->{state};
+            $jokes{ $joke->{name} }->{config} = thaw $joke->{config} if length $joke->{config};
         }
     }
     
@@ -278,40 +217,32 @@ sub update {
     # It's not updating running-config (just startup-config).
     my $self = shift;
     
-    my $info = $self->joker->read( "Mojolicious::Plugin::" . $self->param('plugin') );
+    my $info = $self->joker->read( "Mojolicious::Plugin::" . $self->param('joke') );
     
-    # Make new config from params.
-    # Add dump of new config into data base.
-    upd_conf( $self, $info->{'config'} );
+    # Get new config.
+    upd_conf( $self, $info->{config} );
     
     # Insert if row does not exist.
-    my @plugins = $self->data->read (
-        plugins => { name => $self->param('plugin') }
-    );
+    my @jokes = $self->data->read( jokes => { name => $self->param('joke') } );
 
-    unless ( $#plugins ) {
-        # Update and print "ok" or "cann't".
-        $self->data->update( plugins =>
-            # fields
+    unless ( $#jokes ) {
+        $self->data->update( jokes =>
             {
-                config  => freeze( $info->{'config'} ),
-                state   => $plugins[0]->{'state'} | 0b100
+                config  => freeze $info->{config},
+                state   => $jokes[0]->{state} | 0b100
             },
-            # where
-            { name => $self->param('plugin') }
+            {   name    => $self->param('joke') }
         );
     }
     else {
-        $self->data->create( plugins =>
-            {
-                name    => $self->param('plugin'),
-                state   => 0b100,
-                config  => freeze( $info->{'config'} )
-            }
-        );
+        $self->data->create( jokes => {
+            name    => $self->param('joke'),
+            state   => 0b100,
+            config  => freeze $info->{config}
+        });
     }
         
-    $self->redirect_to( 'joker_read', plugin => $self->param('plugin') );
+    $self->redirect_to( 'joker_read', joke => $self->param('joke') );
     
     # Recursive make new config.
     sub upd_conf {
@@ -334,45 +265,65 @@ sub update {
 sub toggle {
     my $self = shift;
 
-    my @plugins = $self->data->read (
-        plugins => { name => $self->param('plugin') }
-    );
+    my @jokes = $self->data->read( jokes => { name => $self->param('joke') } );
 
-    unless ( $#plugins ) {
+    unless ( $#jokes ) {
         # Change invert-bit.
-        my $new_state = $plugins[0]->{'state'} ^ 0b010;
+        my $new_state = $jokes[0]->{state} ^ 0b010;
         
-        $self->data->update( plugins =>
+        $self->data->update( jokes =>
             { state => $new_state },
-            { name => $self->param('plugin') }
+            { name => $self->param('joke') }
         );
     }
     else {
-        $self->data->create( plugins =>
-            {
-                name    => $self->param('plugin'),
-                state   => 0b010
-            }
-        );
+        $self->data->create( jokes => {
+            name  => $self->param('joke'),
+            state => 0b010
+        });
     }
 
-    $self->redirect_to( 'joker_read', plugin => $self->param('plugin') );
+    $self->redirect_to( 'joker_read', joke => $self->param('joke') );
 }
 
 1;
 
 __END__
 
+=head1 Controllers
+
+=item /joker
+
+You can read it and subdirectories if you in admins group.
+
+=item /
+
+List of jokes, which Joker found in ./lib/Mojolicious/joke.
+
+=item /:joke
+
+Read on get and Update on post.
+
+=item /toggle/:joke
+
+Turn off/on.
+
+=head2 Create and Delete
+
+To "create" joke, you should move it in joke's directory.
+To "delete" it, you should remove its file form joke's directory, but it does
+not purge configuration.
+
 =head1 Data Base Struct
 
-=head2 Plugin table
+=head2 joke table
 
     UNIC varchar 255 | Decimal 1 | Tiny BLOB
     name             | state(0)  | config
 
 =head3 For MySQL
 
-    CREATE TABLE IF NOT EXISTS `joke__plugins` (
+    CREATE TABLE IF NOT EXISTS `joke__jokes` (
       `name` varchar(11) CHARACTER SET ascii COLLATE ascii_bin NOT NULL,
       `state` int(2) NOT NULL,
       `config` tinytext NOT NULL,

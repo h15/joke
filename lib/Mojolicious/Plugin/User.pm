@@ -15,7 +15,15 @@ has config  => sub {{
     salt    => '',
 }};
 
-has joke => sub { 1 };
+sub joke {
+    my $self = shift;    
+    {
+       version => $self->version,
+       about   => $self->about,
+       depends => $self->depends,
+       config  => $self->config
+    }
+}
 
 =head1 Plugin User
 

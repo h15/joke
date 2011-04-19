@@ -14,7 +14,15 @@ has config  => sub { {
     }
 } };
 
-sub joke {};
+sub joke {
+    my $self = shift;    
+    {
+       version => $self->version,
+       about   => $self->about,
+       depends => $self->depends,
+       config  => $self->config
+    }
+}
 
 sub register {
     my ( $self, $app ) = @_;

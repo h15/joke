@@ -23,7 +23,7 @@
 %       my $change = $plugin->{'state'} & 0b100;
     
         <article class="plugin rounded">
-            <a href="<%= url_for('joker_read', plugin => $plugin->{'name'}) %>">
+            <a href="<%= url_for('joker_read', joke => $plugin->{'name'}) %>">
                 <%= $plugin->{'name'} %></a> (<%= $plugin->{'version'} %>)
             <div class="actions">
 %       if ( $invert ) {
