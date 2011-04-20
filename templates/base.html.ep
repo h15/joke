@@ -12,10 +12,10 @@
   <body>
     <div class=page>
       <nav>
-        <div>
-            <a href="<%= url_for('users_read', id => user->data->{'id'}) %>"><%= user->data->{'name'} %></a>
+        <div class=alignright>
 % if ( user->data->{'id'} > 1 ) {
-            <a href="<%= url_for('auths_logout') %>"><%=l 'logout' %></a>
+            <a href="<%= url_for('users_read', id => user->data->{'id'}) %>"><%= user->data->{'name'} %></a>
+            <a href="<%= url_for('auths_logout') %>" class=rounded>x</a>
 % } else {
             <a href="<%= url_for('auths_login') %>"><%=l 'login' %></a>
 % }

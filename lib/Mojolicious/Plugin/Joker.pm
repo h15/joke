@@ -2,6 +2,7 @@ package Mojolicious::Plugin::Joker;
 use Mojo::Base 'Mojolicious::Plugin';
 
 use Storable 'thaw';
+use Mojo::ByteStream;
 
 our $VERSION = 0.2;
 
@@ -68,6 +69,52 @@ sub register {
         IS => sub {
             my ($self, $type, $val) = @_;
             $self->error( "It's not $type!" ) unless $self->is($type, $val);
+        }
+    );
+    
+    $app->helper (
+        datetime => sub {
+            my ($self, $val) = @_;
+            
+            my ( $s, $mi, $h, $d, $mo, $y ) = localtime;
+            my ( $sec, $min, $hour, $day, $mon, $year ) = map { $_ < 10 ? "0$_" : $_ } localtime($val);
+            
+            # Pretty time.
+            my $str = (
+                $year == $y ?
+                    $mon == $mo ?
+                        $day == $d ?
+                            $hour == $h ?
+                                $min == $mi ?
+                                    $sec == $s ?
+                                        $self->l('now')
+                                    :   $self->l('a few seconds ago')
+                                :   ago( min => $mi - $min )
+                            :   ago( hour => $h - $hour )
+                        :   "$hour:$min, $day.$mon"
+                    :   "$hour:$min, $day.$mon"
+                :   "$hour:$min, $day.$mon." . ($year + 1900)
+            );
+            
+            $year += 1900;
+            
+            return new Mojo::ByteStream ( qq[<time datetime="$year-$mon-${day}T$hour:$min:${sec}Z">$str</time>] );
+            
+            sub ago {
+                my ( $type, $val ) = @_;
+                my $a = $val % 10;
+                
+                # Different word for 1, 2-4, 5-9 (in Russian it's true).
+                $a = (
+                    $a > 1 ?
+                        $a > 4 ?
+                            5
+                        :   2
+                    :   1
+                );
+                
+                return $val ." ". $self->l("${type}s$a") ." ". $self->l('ago');
+            }
         }
     );
 }

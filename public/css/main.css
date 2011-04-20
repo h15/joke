@@ -12,7 +12,7 @@
  **********/
 body {
     padding:0px;
-    margin:0px;
+    margin-bottom:0px;
     font-family: Sans-Serif,'Lucida Grande';
     color:#444;
     font-size: 14px;
@@ -51,6 +51,47 @@ nav, header, article, footer {
     display: block;
 }
 
+/*** navigation ***/
+
+nav {
+    position:absolute;
+    top:0px;
+    left:0px;
+    width:100%;
+    border-bottom:1px solid #BAAC9F;
+    background:#E4DED7;
+    filter: progid:DXImageTransform.Microsoft.gradient(startColorstr='#F3F0ED', endColorstr='#D4CEC7'); /* for IE */
+    background: -webkit-gradient(linear, left top, left bottom, from(#F3F0ED), to(#D4CEC7)); /* for webkit browsers */
+    background: -moz-linear-gradient(top,  #F3F0ED,  #D4CEC7); /* for firefox 3.6+ */
+/*    height:26px;*/
+    padding: 5px 0px 5px 0px;
+}
+
+nav a {
+    color: #222;
+    text-decoration:none;
+}
+
+nav a.rounded:hover {
+    color: #222;
+    background: #fff;
+}
+
+nav a.rounded {
+	padding: 0px 4px 0px 4px;
+	background: #eee;
+	color:#999;
+	border: 1px solid #e8e8e8;
+	-moz-border-radius: 5px;
+	-webkit-border-radius: 5px;
+	border-radius: 5px;
+	-khtml-border-radius: 5px;
+}
+
+nav div {
+    padding:0px 10px 0px 0px;
+}
+
 body header h1 {
     color:#bbb;
     border-bottom:3px solid #ddd;
@@ -72,7 +113,7 @@ article.page td {
 }
 
 .page {
-	margin:0px auto;
+	margin:50px auto;
 	width:600px;
 	color:#222;
 	font-family:Sans, Arial;

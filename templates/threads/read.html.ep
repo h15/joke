@@ -17,7 +17,7 @@
 % if ( $head->{id} != $posts->[0]->{id} ) {
     <header>
         <a href="<%= url_for('posts_read', thread => $head->{thread_id}, post => $head->{id}) %>">#<%= $head->{id} %></a>
-        <%= $head->{post_time} %>
+        <%= datetime $head->{post_time} %>
         <%= $head->{author} %>
         <article class=thread_head>
             <%= $head->{'text'} %>
@@ -27,7 +27,7 @@
 % for my $post ( @$posts ) {
     <article class=thread_post>
         <a href="<%= url_for('posts_read', thread => $post->{thread_id}, post => $post->{id}) %>">#<%= $post->{id} %></a>
-        <%= $post->{post_time} %>
+        <%= datetime $post->{post_time} %>
         <%= $post->{author} %>
         <article class=thread_head>
             <%= $post->{'text'} %>
