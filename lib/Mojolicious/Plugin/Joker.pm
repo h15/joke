@@ -92,7 +92,7 @@ sub wake_up {
     ) for keys %jokes;
     
     # Load only active or core jokes.
-    $jokes{$_}->{state} = 0b001 for $self->core;
+    $jokes{$_}->{state} = 0b001 for @{$self->core};
     
     for ( keys %jokes ) {
         delete $jokes{$_}, next if $jokes{$_}->{state} != 0b001;
@@ -103,7 +103,7 @@ sub wake_up {
     }
     
     # Joke, repeated twice, doubly funny. But...
-    delete $jokes{$_} for $self->core;
+    delete $jokes{$_} for @{$self->core};
     $self->app->plugin( lc $_ ) for keys %jokes;
 }
 
@@ -224,11 +224,11 @@ sub update {
     
     # Insert if row does not exist.
     my @jokes = $self->data->read( jokes => { name => $self->param('joke') } );
-
+    
     unless ( $#jokes ) {
         $self->data->update( jokes =>
             {
-                config  => freeze $info->{config},
+                config  => freeze($info->{config}),
                 state   => $jokes[0]->{state} | 0b100
             },
             {   name    => $self->param('joke') }
