@@ -1,0 +1,38 @@
+% extends 'base';
+% content_for title => begin
+    <%=l 'Thread' %> <%= $head->{thread_id} %>
+% end
+
+% content_for nav => begin
+% end
+
+% content_for header => begin
+% end
+
+% content_for footer => begin
+% end
+
+%= content body => begin
+<article class=page>
+% if ( $head->{id} != $posts->[0]->{id} ) {
+    <header>
+        <a href="<%= url_for('posts_read', thread => $head->{thread_id}, post => $head->{id}) %>">#<%= $head->{id} %></a>
+        <%= $head->{post_time} %>
+        <%= $head->{author} %>
+        <article class=thread_head>
+            <%= $head->{'text'} %>
+        </article>
+    </header>
+% }
+% for my $post ( @$posts ) {
+    <article class=thread_post>
+        <a href="<%= url_for('posts_read', thread => $post->{thread_id}, post => $post->{id}) %>">#<%= $post->{id} %></a>
+        <%= $post->{post_time} %>
+        <%= $post->{author} %>
+        <article class=thread_head>
+            <%= $post->{'text'} %>
+        </article>
+    </article>
+% }
+</article>
+% end

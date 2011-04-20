@@ -34,6 +34,9 @@ sub register {
     
     # Posts
     $r->route('/:thread/new', thread => qr/\d+/)->via('post')->to('posts#create')->name('posts_create');
+    $r->route('/:thread/new')->via('get')->to(
+        cb => sub { shift->render( template => 'posts/form' ) }
+    )->name('posts_form');
     $r->route('/:thread/:post', [qw/thread post/] => qr/\d+/)->via('get')->to('posts#read')->name('posts_read');
 #    $r->route('/:thread/:post', [qw/thread post/] => qr/\d+/)->via('post')->to('posts#update')->name('posts_update');
 }
@@ -56,7 +59,7 @@ __END__
     ) ENGINE = MYISAM ;
     
     CREATE TABLE `joker`.`joke__threads` (
-        `id` INT( 11 ) UNSIGNED NOT NULL ,
+        `id` INT( 11 ) UNSIGNED NOT NULL AUTO_INCREMENT ,
         `parent_id` INT( 11 ) UNSIGNED NOT NULL ,
         `post_id` INT( 11 ) UNSIGNED NOT NULL,
         PRIMARY KEY ( `id` ) ,

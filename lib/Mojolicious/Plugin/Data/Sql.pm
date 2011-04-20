@@ -65,7 +65,9 @@ sub create {
     my $self = shift;
     my $table = shift;
             
-    $self->{'db'}->insert( $self->{'prefix'}.$table, @_ );
+    $self->{'db'}->insert( $self->{'prefix'} . $table, @_ );
+    
+    return $self->{'db'}->last_insert_id(undef, undef, $self->{'prefix'} . $table, undef);
 }
 
 # Params: table, {where}

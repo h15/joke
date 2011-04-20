@@ -1,0 +1,27 @@
+% extends 'base';
+% content_for title => begin
+    <%=l 'New post' %>
+% end
+
+% content_for nav => begin
+% end
+
+% content_for header => begin
+% end
+
+% content_for footer => begin
+% end
+
+%= content body => begin
+<article class=page>
+    <form method=post action="<%= url_for('posts_create', thread => $self->param('thread')) %>">
+        <div>
+            <input name='parent_id'>
+        </div>
+        <textarea name=text></textarea>
+        <div>
+            <input type=submit>
+        </div>
+    </form>
+</article>
+% end

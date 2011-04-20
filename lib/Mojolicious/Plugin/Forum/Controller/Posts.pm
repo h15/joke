@@ -23,22 +23,47 @@ sub read {
 sub create {
     my $self = shift;
     
-    my $thread = [$self->data->read( threads => { id => $self->param('id') } )]->[0];
+    #
+    #   TODO: ACL by thread_id
+    #
+    
+    my $id = $self->param('thread');
+    
+    if ( $self->param('thread') == 0 ) {
+        $id = $self->data->create( threads => {
+            parent_id => 0,
+            post_id   => 0
+        });
+        
+        return $self->error("Cann't save post.") unless $id;   
+    }
+    
+    my $thread = [$self->data->read( threads => { id => $id } )]->[0];
     
     my $parent = ( +$self->param('parent_id') ?
         $self->param('parent_id') :
         $thread->{post_id}
     );
     
-    $self->data->create( posts => {
-        thread_id => $self->param('id'),
+    $parent ||= 0;
+    
+    $id = $self->data->create( posts => {
+        thread_id => $thread->{id},
         parent_id => $parent,
         post_time => time,
         author    => $self->user->data->{id},
         text      => $self->param('text'),
     });
     
-    $self->redirect_to('threads_read', id => $self->param('id'));
+    
+    if ( $thread->{post_id} == 0 ) {
+        $self->data->update( threads =>
+            { post_id => $id },
+            { id => $thread->{id} }
+        );
+    }
+    
+    $self->redirect_to('threads_read', id => $thread->{id});
 }
 
 1;

@@ -9,14 +9,14 @@ sub read {
     
     return $self->error("Thread does not exist!") unless defined $thread;
     
-    $parent_post = [$self->data->read( posts => { id => $thread->{'post_id'} } )]->[0];
-    @posts = $self->data->read( posts => { thread_id => $self->param('id') } );
+    my $parent_post = [$self->data->read( posts => { id => $thread->{'post_id'} } )]->[0];
+    my @posts = $self->data->read( posts => { thread_id => $self->param('id') } );
     
     return $self->error("Thread is empty!") unless scalar @posts;
     
-    my $head = ( $post[0]->{id} != $thread->{post_id} ?
+    my $head = ( $posts[0]->{id} != $thread->{post_id} ?
         [$self->data->read( posts => { id => $thread->{post_id} } )]->[0]:
-        $post[0]
+        $posts[0]
     );
     
     $self->stash(
