@@ -15,16 +15,34 @@ Run in joke's root directory
 
     sudo -s 'curl -L cpanmin.us | perl - Mojolicious'
 
-=head1 Struct
+=head1 Data base struct
 
-               .------------.
-    Joke ----> | Joker      |--> Access --> PluginManager
-               | |          |           `-> OtherMods
-               | |          |
-               | |-> Msg  --|--> done|error
-               | |-> Data --|--> driver ----> DataBase
-               | `-> User --|--> auth
-               '------------'
+=head3 joke table
+
+    UNIC varchar 255 | Decimal 1 | Tiny BLOB
+    name             | state(0)  | config
+    
+    state: change-bit | invert-bit | active-bit
+    1 - if currently working;
+    +2 - if invert working bit on restart;
+    +4 - if configuration changed.
+
+=head3 User table
+
+    id              int 11                  (++)
+    groups          tinytext                (empty)
+    name            varchar 32  utf8-bin    (anonymous)
+    mail            varchar 64  ascii-bin
+    regdate         int 11                  (NOW on create)
+    password        varchar 32              (0)
+    ban_reason      int 2                   (0)
+    ban_time        int 11                  (0)
+    confirm_key     varchar 32              (generate on create)
+    confirm_time    int 11                  (NOW on create)
+
+=head2 for MySQL
+
+In file C<mysql.sql>.
 
 =head1 COPYRIGHT AND LICENSE
 
