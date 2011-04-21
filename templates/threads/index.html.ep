@@ -1,0 +1,38 @@
+% extends 'base';
+% content_for title => begin
+    <%=l 'Threads' %>
+% end
+
+% content_for nav => begin
+% end
+
+% content_for header => begin
+% end
+
+% content_for footer => begin
+% end
+
+%= content body => begin
+<article class=page>
+
+%   for my $t ( @$threads ) {
+        <article class=thread_post>
+            <a href="<%= url_for('threads_read', id => $t->{thread_id}) %>">
+                <article class="thread_text rounded">
+                    <%= $t->{'text'} %>
+                </article>
+            </a>
+        </article>
+%   }
+
+
+    <article class=thread_post>
+    <%= user->data->{'name'} %>:
+    <form method=post action="<%= url_for('posts_create', thread => $self->param('thread')) %>">
+        <textarea name=text></textarea>
+        <div>
+            <input type=submit>
+        </div>
+    </article>
+</article>
+% end

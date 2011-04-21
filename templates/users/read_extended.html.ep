@@ -28,10 +28,10 @@
             </td>
         </tr><tr>
             <td colspan=2>
-                <a href="#" onClick="getElementById('hidden_pass_fields').style.display = (getElementById('hidden_pass_fields').style.display == 'block' ? 'none' : 'block'); return false">
+                <a href="#" onClick="hidden('pass_fields')">
                     <%=l 'change password' %>
                 </a>
-                <table id="hidden_pass_fields" style="display:none">
+                <table id="pass_fields" style="display:none">
                     <tr>
                         <td><%=l 'password' %></td>
                         <td><input name=pass type=password></td>

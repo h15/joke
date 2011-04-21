@@ -103,6 +103,20 @@ sub register {
     $r->route('/login')->via('post')->to('auths#login')->name('auths_login');
     $r->route('/login')->via('get')->to( cb => sub { shift->render( template => 'auths/form' ) } )->name('auths_form');
     $r->route('/logout')->to('auths#logout')->name('auths_logout');
+    
+    $app->helper (
+        render_user => sub {
+            my ( $self, $id ) = @_;
+            
+            my $user = [$self->data->read( users => {id => $id} )]->[0];
+            
+            return new Mojo::ByteStream (
+                '<a href="' . $app->url_for('users_read', id => $id) . '" class="' .
+                    ($user->{ban_reason} ? 'banned' : 'active') . '">' .
+                    $user->{name} . "</a>"
+            );
+        }
+    );
 }
 
 1;

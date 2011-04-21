@@ -73,7 +73,7 @@ sub register {
     );
     
     $app->helper (
-        datetime => sub {
+        render_datetime => sub {
             my ($self, $val) = @_;
             
             my ( $s, $mi, $h, $d, $mo, $y ) = localtime;

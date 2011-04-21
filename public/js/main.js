@@ -15,3 +15,9 @@ document.createElement('header');
 document.createElement('nav');
 document.createElement('article');
 document.createElement('footer');
+
+function hidden(id) {
+    var a = document.getElementById(id);
+    a.style.display = (a.style.display == 'block' ? 'none' : 'block');
+    return false;
+}

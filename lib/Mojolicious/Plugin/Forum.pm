@@ -25,6 +25,7 @@ sub register {
     my $r = $app->routes->route('/thread')->to( namespace => 'Mojolicious::Plugin::Forum::Controller' );
     
     # Threads
+    $r->route('/')->via('get')->to('threads#index')->name('threads_index');
     $r->route('/new')->via('get')->to(
         cb => sub { shift->render( template => 'threads/form' ) }
     )->name('threads_form');

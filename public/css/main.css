@@ -92,6 +92,31 @@ nav div {
     padding:0px 10px 0px 0px;
 }
 
+/*** Threads ***/
+
+.thread_post {
+    margin-top:20px;
+}
+
+.thread_post textarea {
+    width:560px;
+    margin:0px 20px 0px 20px;
+}
+
+.thread_post div {
+    margin-left:20px;
+}
+
+.small {
+    font-size:10px;
+    color:#ccc;
+    text-decoration:none;
+}
+
+article.hidden {
+    display:none;
+}
+
 body header h1 {
     color:#bbb;
     border-bottom:3px solid #ddd;
@@ -123,10 +148,10 @@ article.page td {
 	padding: 5px;
 	background: #eee;
 	border: 1px solid #ddd;
-	-moz-border-radius: 10px;
-	-webkit-border-radius: 10px;
-	border-radius: 10px;
-	-khtml-border-radius: 10px;
+	-moz-border-radius: 5px;
+	-webkit-border-radius: 5px;
+	border-radius: 5px;
+	-khtml-border-radius: 5px;
 }
 
 .info {

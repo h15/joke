@@ -1,6 +1,19 @@
 package Mojolicious::Plugin::Forum::Controller::Threads;
 use Mojo::Base 'Mojolicious::Controller';
 
+sub index {
+	my $self = shift;
+	
+	my @threads = $self->data->read( threads => { parent_id => 0 } );
+	
+	map {
+        $_ = [$self->data->read( posts => { id => $_->{post_id} } )]->[0]
+    } @threads;
+	
+	$self->stash( threads => \@threads );
+    $self->render;
+}
+
 sub read {
 	my $self = shift;
 	
@@ -19,9 +32,16 @@ sub read {
         $posts[0]
     );
     
+    my @threads = $self->data->read( threads => { parent_id => $self->param('id') } );
+    
+    map {
+        $_ = [$self->data->read( posts => { id => $_->{post_id} } )]->[0]
+    } @threads;
+    
     $self->stash(
         head => $head,
         parent => $parent_post,
+        threads => \@threads,
         posts => \@posts
     );
     
