@@ -89,8 +89,8 @@ sub register {
                                     $sec == $s ?
                                         $self->l('now')
                                     :   $self->l('a few seconds ago')
-                                :   ago( min => $mi - $min )
-                            :   ago( hour => $h - $hour )
+                                :   ago( min => $mi - $min, $self )
+                            :   ago( hour => $h - $hour, $self )
                         :   "$hour:$min, $day.$mon"
                     :   "$hour:$min, $day.$mon"
                 :   "$hour:$min, $day.$mon." . ($year + 1900)
@@ -101,7 +101,7 @@ sub register {
             return new Mojo::ByteStream ( qq[<time datetime="$year-$mon-${day}T$hour:$min:${sec}Z">$str</time>] );
             
             sub ago {
-                my ( $type, $val ) = @_;
+                my ( $type, $val, $self ) = @_;
                 my $a = $val % 10;
                 
                 # Different word for 1, 2-4, 5-9 (in Russian it's true).

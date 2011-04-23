@@ -21,3 +21,9 @@ function hidden(id) {
     a.style.display = (a.style.display == 'block' ? 'none' : 'block');
     return false;
 }
+
+function addValue(id, val) {
+    var a = document.getElementById(id);
+    a.value = Number(a.value) + Number(val);
+    return false;
+}

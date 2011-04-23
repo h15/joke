@@ -28,11 +28,13 @@
 
     <article class=thread_post>
     <%= user->data->{'name'} %>:
-    <form method=post action="<%= url_for('posts_create', thread => $self->param('thread')) %>">
+    <form method=post action="<%= url_for('posts_create', thread => 0) %>">
+        <input type=hidden name=thread value=0>
         <textarea name=text></textarea>
         <div>
             <input type=submit>
         </div>
+    </form>
     </article>
 </article>
 % end

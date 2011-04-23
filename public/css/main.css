@@ -7,64 +7,34 @@
  * the terms of the Artistic License version 2.0.
  */
 
-/**********
- *  Tags  *
- **********/
 body {
     padding:0px;
-    margin-bottom:0px;
+    margin:0px;
     font-family: Sans-Serif,'Lucida Grande';
     color:#444;
     font-size: 14px;
 }
+a { color: #c62; }
+img { border:0px; }
 
-a {
-    color: #c62;
-}
+/**********************
+* For HTML5 slowpokes *
+**********************/
 
-img {
-    border:0px;
-}
-
-dl {
-    width:240px;
-    display:block;
-}
-
-dd, dt {
-    padding:0px;
-    margin:0px;
-	width: 100px;
-    height: 26px;
-    background: #eee;
-}
-
-dd { float: right; }
-
-dt { float:left; }
-
-/***************
- * HTML5
- ***************/
-
-nav, header, article, footer {
-    display: block;
-}
+nav, header, article, footer { display: block; }
 
 /*** navigation ***/
 
 nav {
-    position:absolute;
-    top:0px;
-    left:0px;
+    position:absolute; top:0px; left:0px;
     width:100%;
     border-bottom:1px solid #BAAC9F;
     background:#E4DED7;
+    padding: 5px 0px 5px 0px;
+    /* Gradient */
     filter: progid:DXImageTransform.Microsoft.gradient(startColorstr='#F3F0ED', endColorstr='#D4CEC7'); /* for IE */
     background: -webkit-gradient(linear, left top, left bottom, from(#F3F0ED), to(#D4CEC7)); /* for webkit browsers */
     background: -moz-linear-gradient(top,  #F3F0ED,  #D4CEC7); /* for firefox 3.6+ */
-/*    height:26px;*/
-    padding: 5px 0px 5px 0px;
 }
 
 nav a {
@@ -82,10 +52,6 @@ nav a.rounded {
 	background: #eee;
 	color:#999;
 	border: 1px solid #e8e8e8;
-	-moz-border-radius: 5px;
-	-webkit-border-radius: 5px;
-	border-radius: 5px;
-	-khtml-border-radius: 5px;
 }
 
 nav div {
@@ -105,6 +71,56 @@ nav div {
 
 .thread_post div {
     margin-left:20px;
+}
+
+/*** User control panel ***/
+
+.ucp table {
+    border-color:#ddd;
+}
+
+.user_fields {
+    width:300px;
+}
+
+/*** Messages ***/
+
+.done, .error, .info, .rounded {
+	padding: 5px;
+	background:#F2F1F0;
+	border: 1px solid #ddd;
+	-moz-border-radius: 5px;
+	-webkit-border-radius: 5px;
+	border-radius: 5px;
+	-khtml-border-radius: 5px;
+}
+
+.done, .error, .info {
+    text-align:center;
+	margin: 5px;
+}
+
+.info {
+	background: #ffd;
+	border: 1px solid #fff7dd;
+}
+
+.error {
+    background: #fee;
+    border: 1px solid #fcc;
+    margin: 50px auto;
+}
+
+.done {
+    background: #efe;
+    border: 1px solid #cfc;
+    margin: 50px auto;
+}
+
+/***************************/
+
+header {
+    margin-top:50px;
 }
 
 .small {
@@ -138,41 +154,10 @@ article.page td {
 }
 
 .page {
-	margin:50px auto;
+	margin:0px auto;
 	width:600px;
 	color:#222;
 	font-family:Sans, Arial;
-}
-
-.rounded {
-	padding: 5px;
-	background: #eee;
-	border: 1px solid #ddd;
-	-moz-border-radius: 5px;
-	-webkit-border-radius: 5px;
-	border-radius: 5px;
-	-khtml-border-radius: 5px;
-}
-
-.info {
-    padding: 5px 5px 5px 15px;
-    margin: 0px 0px 10px 10px;
-	background: #ffd;
-	border: 1px solid #fff7dd;
-	-moz-border-radius: 4px;
-	-webkit-border-radius: 4px;
-	border-radius: 4px;
-	-khtml-border-radius: 4px;
-}
-
-.simple_table {
-    border:0px;
-    //width:600px;
-}
-
-.simple_table td {
-    vertical-align: top;
-    padding:2px 5px 2px 5px;
 }
 
 td.changeable {
@@ -232,45 +217,7 @@ a.action:hover {
 	margin: 5px 0px;
 }
 
-.center {
-    margin: 50px auto;
-}
-
-.date {
-	float: right;
-}
-
-.error {
-    width: 600px;
-    background: #fee;
-    border: 1px solid #fcc;
-    padding: 50px;
-    margin: 50px auto;
-    text-align:center;
-}
-
-.done {
-    width: 600px;
-    background: #efe;
-    border: 1px solid #cfc;
-    padding: 50px;
-    margin: 50px auto;
-    text-align:center;
-}
-
-.simple_table {
-    border:0px;
-    //width:600px;
-}
-
-.simple_table td {
-    vertical-align: top;
-    padding:2px 5px 2px 5px;
-}
-
-td.changeable {
-    border:1px solid #ddd;
-}
+/*** Align ***/
 
 .aligncenter {
     margin:auto;
@@ -282,10 +229,4 @@ td.changeable {
 
 .alignleft {
     float:left;
-}
-
-.changeable {
-    border:1px solid #ddd;
-    background:#eee;
-    color: #222;
 }

@@ -14,9 +14,10 @@
 % end
 
 %= content body => begin
-<article class=page>
+<article class="page ucp">
+    <div class="rounded alignleft">
 <form method=post action=<%= url_for('users_update', id => $user->{'id'} ) %>>
-    <table rules=rows>
+    <table class="user_fields" rules=rows>
         <tr>
             <td><%=l 'name' %></td>
             <td>
@@ -47,16 +48,34 @@
             <td><input name=mail value="<%= $user->{'mail'} %>"></td>
         </tr><tr>
             <td><%=l 'registered' %></td>
-            <td><%= $user->{'regdate'} %></td>
+            <td><%=render_datetime $user->{'regdate'} %></td>
         </tr><tr>
             <td><%=l 'ban reason' %></td>
             <td>
                 <input name=ban_reason value="<%= $user->{'ban_reason'} %>">
             </td>
         </tr><tr>
-            <td><%=l 'ban time' %></td>
-            <td>
-                <input name=ban_time value="<%= $user->{'ban_time'} %>">
+            <td colspan=2>
+                <table>
+                    <tr>
+                        <td><%=l 'ban time' %></td>
+                        <td>
+                            <input name=ban_time id=ban_time value="<%= $user->{'ban_time'} eq '' ? $user->{'ban_time'} : time %>">
+                        </td>
+                    </tr><tr>
+                        <td><%=l 'now' %></td>
+                        <td>
+                            <%= $user->{'ban_time'} ? render_datetime $user->{'ban_time'} : l 'permanent' %>
+                        </td>
+                    </tr><tr>
+                        <td colspan=2>
+                            <%=l 'Add' %>:
+                            <a href="#" onClick="addValue('ban_time', 60*60)"><%=l 'hour' %></a>,
+                            <a href="#" onClick="addValue('ban_time', 60*60*24)"><%=l 'day' %></a>,
+                            <a href="#" onClick="addValue('ban_time', 60*60*24*7)"><%=l 'week' %></a>
+                        </td>
+                    </tr>
+                </table>
             </td>
         </tr><tr>
             <td><%=l 'status' %></td>
@@ -68,5 +87,6 @@
         </tr>
     </table>
 </form>
+    </div>
 </article>
 % end

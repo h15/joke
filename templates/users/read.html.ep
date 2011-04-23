@@ -14,8 +14,9 @@
 % end
 
 %= content body => begin
-<article class=page>
-    <table rules=rows>
+<article class="page ucp">
+    <div class="rounded alignleft">
+    <table class="user_fields" rules=rows>
         <tr>
             <td><%=l 'id' %></td>
             <td><%= $user->{'id'} %></td>
@@ -24,7 +25,7 @@
             <td><%= $user->{'name'} %></td>
         </tr><tr>
             <td><%=l 'registered' %></td>
-            <td><%= $user->{'regdate'} %></td>
+            <td><%=render_datetime $user->{'regdate'} %></td>
         </tr><tr>
             <td><%=l 'status' %></td>
             <td><%=l $user->{'ban_reason'} ? 'inactive' : 'active' %></td>
@@ -38,5 +39,6 @@
 % }
         </tr>
     </table>
+    <div>
 </article>
 % end
