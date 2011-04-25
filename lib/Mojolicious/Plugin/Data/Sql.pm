@@ -49,6 +49,16 @@ sub read {
     # if input like (table, {where})
     ( $_[1], $_[0] ) = ( $_[0], '*' ) unless $_[1];
     
+    [$self->{'db'}->select( $self->{'prefix'} . $table, @_ )->hashes]->[0];
+}
+
+sub list {
+    my $self = shift;
+    my $table = shift;
+    
+    # if input like (table, {where})
+    ( $_[1], $_[0] ) = ( $_[0], '*' ) unless $_[1];
+    
     $self->{'db'}->select( $self->{'prefix'} . $table, @_ )->hashes;
 }
 

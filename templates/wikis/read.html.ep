@@ -1,0 +1,50 @@
+% extends 'base';
+% content_for title => begin
+    <%= $title %>
+% end
+
+% content_for nav => begin
+% end
+
+% content_for header => begin
+    <h1><%= $title %></h1>
+% end
+
+% content_for footer => begin
+% end
+
+%= content body => begin
+<article class="wiki">
+% if ( $art_status & 1 ) {
+    <div class=info>
+        <%=l 'Article protected' %>
+    </div>
+% }
+    <div class="rounded">
+        <%= $rev_text %>
+    </div>
+    <footer>
+% if ( $rev_id == $active_rev ) {
+        <%=l 'It\'s a current version of this document.' %>
+% }
+        <%=l 'Last update' %>: <%= render_user $user %>, <%= render_datetime $datetime %>
+    </footer>
+</article>
+
+<a href="#" onClick="hidden('wiki_form')"><%=l 'edit' %></a>
+
+<article class="wiki hidden" id=wiki_form>
+    <form method=post action="<%= url_for('wikis_update', article => $self->param('article') ) %>">
+% if ( user->is_admin ) { 
+            <input class="wide title" name='title' value="<%= $title %>">
+            <label>
+                <input type=checkbox class="wide" name='status'> protected
+            </label>
+% }
+        <textarea class="wide text" name=text><%= $rev_text %></textarea>
+        <div>
+            <input type=submit>
+        </div>
+    </form>
+</article>
+% end

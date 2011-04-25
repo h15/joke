@@ -119,6 +119,21 @@ nav div {
 
 /***************************/
 
+/*** wiki ***/
+
+.wiki .wide {
+    width:100%;
+}
+
+.wiki input.wide {
+    font-size:18px;
+}
+
+.wiki textarea.text {
+    height:400px;
+}
+
+
 header {
     margin-top:50px;
 }

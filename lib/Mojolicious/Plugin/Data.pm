@@ -75,6 +75,14 @@ sub create {
 # Params : (table, fields?, {where}, order?).
 # Returns: array of hashes.
 sub read {
+    return shift->{'driver'}->list(@_);
+}
+
+sub list {
+    return shift->{'driver'}->list(@_);
+}
+
+sub read_one {
     return shift->{'driver'}->read(@_);
 }
 

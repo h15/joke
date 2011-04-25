@@ -1,0 +1,27 @@
+% extends 'base';
+% content_for title => begin
+    <%=l 'New post' %>
+% end
+
+% content_for nav => begin
+% end
+
+% content_for header => begin
+% end
+
+% content_for footer => begin
+% end
+
+%= content body => begin
+<article class="page wiki">
+    <form method=post action="<%= url_for('wikis_create') %>">
+        <div>
+            <input class="wide title" name='title'>
+        </div>
+        <textarea class="wide text" name=text></textarea>
+        <div>
+            <input type=submit>
+        </div>
+    </form>
+</article>
+% end

@@ -44,3 +44,22 @@ CREATE TABLE `joker`.`joke__threads` (
     PRIMARY KEY ( `id` ) ,
     INDEX ( `id` )
 ) ENGINE = MYISAM ;
+
+CREATE TABLE `joker`.`joke__wiki_article` (
+    `id` INT( 11 ) UNSIGNED NOT NULL AUTO_INCREMENT ,
+    `revision_id` INT( 11 ) UNSIGNED NOT NULL DEFAULT '0',
+    `title` VARCHAR( 255 ) CHARACTER SET utf8 COLLATE utf8_bin NOT NULL ,
+    `status` INT( 1 ) UNSIGNED NOT NULL DEFAULT '0',
+    PRIMARY KEY ( `id` ) ,
+    INDEX ( `id` )
+) ENGINE = MYISAM ;
+
+CREATE TABLE `joker`.`joke__wiki_revision` (
+    `id` INT( 11 ) UNSIGNED NOT NULL AUTO_INCREMENT ,
+    `article_id` INT( 11 ) UNSIGNED NOT NULL ,
+    `user` INT( 11 ) UNSIGNED NOT NULL ,
+    `text` TEXT CHARACTER SET utf8 COLLATE utf8_bin NOT NULL ,
+    `datetime` INT( 11 ) UNSIGNED NOT NULL ,
+    PRIMARY KEY ( `id` ) ,
+    INDEX ( `id` )
+) ENGINE = MYISAM ;
