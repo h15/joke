@@ -2,6 +2,8 @@ package Mojolicious::Plugin::Gitosis::EasyConfig;
 use strict;
 use warnings;
 
+our $VERSION = 0.1;
+
 sub new {
     my ( $self, $args ) = @_;
     
