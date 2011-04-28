@@ -29,6 +29,7 @@ sub register {
     
     $app->plugins->namespaces(['Mojolicious::Plugin::Captcha']);
     $app->plugin( lc $self->config->{'sub_plugin'}, $self );
+    $app->plugins->namespaces(['Mojolicious::Plugin']);
 }
 
 1;

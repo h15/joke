@@ -15,7 +15,7 @@
 %= content body => begin
 <article class=page>
     <form method=post action="<%= url_for('auths_login') %>">
-	    <table class="center rounded">
+	    <table class="aligncenter rounded">
 	        <tr>
 	            <td>
 	                <%=l 'e-mail' %>

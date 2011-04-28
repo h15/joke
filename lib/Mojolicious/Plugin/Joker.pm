@@ -7,7 +7,7 @@ use Mojo::ByteStream;
 our $VERSION = 0.2;
 
 has jokes => sub { {} };
-has core  => sub { [qw/Message Data User I18n/] };
+has core  => sub { [qw/I18n Message Data User Captcha/] };
 has root  => './lib/Mojolicious/Plugin/';
 has 'app';
 

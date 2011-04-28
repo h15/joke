@@ -33,7 +33,7 @@ sub register {
 			return new Mojo::ByteStream (
 			    "<p>" . $questions[$id]->[0] . "</p><input name='answer'>"
 			);
-		},
+		}
 	);
 	$app->renderer->add_helper(
 		captcha => sub {

@@ -11,8 +11,8 @@ sub new {
         groups => {},
         repos  => {},
         file   => '',
-        list => qr/([0-9a-zA-Z\-_@ ]+)/,
-        word => qr/([0-9a-zA-Z\-_]+)/
+        list => qr/([\d\w\-_@\s,.!?"';:\/\\\(\)]+)/,
+        word => qr/([\d\w\-_]+)/
     };
     
     if ( exists $args->{file} && -r $args->{file} && -w $args->{file} ) {
@@ -33,6 +33,8 @@ sub new {
             elsif ( $line =~ /^\s*description\s*=\s*$list\s*$/i ) { $obj->{repos}->{$r}->{desc} = $1 }
         }
         close F;
+        
+        delete $obj->{groups}->{'gitosis-admin'};
     }
     else {
         print STDERR "\n[-]\tNeed file name!\n"             unless exists $args->{file};
@@ -47,7 +49,7 @@ sub add_group {
     my ( $self, $conf ) = @_;
     
     unless ( $self->find_group( [keys %$conf]->[0] ) ) {
-        $self->{groups} = { %{$self->{groups}}, $conf }
+        $self->{groups} = { %{$self->{groups}}, %$conf }
     }
 }
 
@@ -64,7 +66,7 @@ sub add_repo {
     my ( $self, $conf ) = @_;
     
     unless ( $self->find_repo( [keys %$conf]->[0] ) ) {
-        $self->{repos} = { %{$self->{repos}}, $conf }
+        $self->{repos} = { %{$self->{repos}}, %$conf }
     }
 }
 
@@ -89,7 +91,7 @@ sub save {
     for my $k ( keys %{$self->{groups}} ) {
         $str .= "\n[group $k]\n";
         $str .= "writable = " . $self->{groups}->{$k}->{dir} . "\n";
-        $str .= "members = " . join(' ', @{$self->{groups}->{$k}->{members}}) . "\n";
+        $str .= "members = " . join(' ', @{ $self->{groups}->{$k}->{members} }) . "\n";
     }
     
     open F, '>', $self->{file};
