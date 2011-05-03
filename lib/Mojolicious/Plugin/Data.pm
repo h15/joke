@@ -7,6 +7,7 @@ has depends => sub { [ qw/Message/ ] };
 has config  => sub { {
     sub_plugin => "Sql",
     config     => {
+    # TODO: generate config in sub_plugin
         host    => 'dbi:mysql:joker',
         user    => 'joker',
         passwd  => 'fSZs4hCZusneJcbB',
@@ -51,14 +52,14 @@ use Module::Load;
 sub new {
     my ( $self, $conf ) = @_;
     
-    my $class = "Mojolicious::Plugin::Data::" . $conf->{'sub_plugin'};
+    my $class = "Mojolicious::Plugin::Data::" . $conf->{sub_plugin};
     load $class;
-    my $drv = $class->new( $conf->{'config'} );
+    my $drv = $class->new($conf->{config});
     
     # If data base driver init failed.
     return 0 unless $drv;
     
-    my $obj = { driver => $drv };
+    my $obj = {driver => $drv};
     
     bless $obj, $self;
 }
@@ -69,33 +70,34 @@ sub new {
 # Params : (table, {fields}).
 # Returns: id of new object.
 sub create {
-    return shift->{'driver'}->create(@_);
+    return shift->{driver}->create(@_);
 }
 
 # Params : (table, fields?, {where}, order?).
 # Returns: array of hashes.
 sub read {
-    return shift->{'driver'}->list(@_);
+    die "[-] You should not ever use read.\n".
+        "    Now you can use list for the same.\n";
 }
 
 sub list {
-    return shift->{'driver'}->list(@_);
+    return shift->{driver}->list(@_);
 }
 
 sub read_one {
-    return shift->{'driver'}->read(@_);
+    return shift->{driver}->read(@_);
 }
 
 # Params : (table, {fields}, {where}).
 # Returns: true || false.
 sub update {
-    return shift->{'driver'}->update(@_);
+    return shift->{driver}->update(@_);
 }
 
 # Params : (table, {where}).
 # Returns: true || false.
 sub delete {
-    return shift->{'driver'}->delete(@_);
+    return shift->{driver}->delete(@_);
 }
 
 1;

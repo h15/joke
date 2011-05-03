@@ -104,9 +104,9 @@ sub register {
                 my ( $type, $val, $self ) = @_;
                 my $a = $val % 10;
                 
-                # Different word for 1, 2-4, 5-9 (in Russian it's true).
+                # Different word for 1; 2-4; 0, 5-9 (in Russian it's true).
                 $a = (
-                    $a > 1 ?
+                    $a != 1 ?
                         $a > 4 ?
                             5
                         :   2
@@ -122,8 +122,8 @@ sub register {
 sub wake_up {
     my ( $self ) = @_;
     
-    # Read all joke's accounts in data base.
-    my %jokes = map { $_->{name}, $_ } $self->app->data->read('jokes'); 
+    # Read all joke's accounts from data base.
+    my %jokes = map { $_->{name}, $_ } $self->app->data->list('jokes'); 
     
     # Change state.
     for ( keys %jokes ) {
@@ -226,7 +226,7 @@ sub read {
     return $self->error('Wrong joke!') unless %$info;
     
     # Get joke's info form db by NAME.
-    my $joke = [ $self->data->read( jokes => { name => $self->param('joke') } ) ]->[0];
+    my $joke = $self->data->read_one( jokes => { name => $self->param('joke') } );
     
     $info->{state} = $joke->{state} if defined $joke->{state};
     $info->{config} = thaw $joke->{config} if length $joke->{config};
@@ -245,7 +245,7 @@ sub list {
     my %jokes = $self->joker->scan;
     
     # State, config from db.
-    for my $joke ( $self->data->read('jokes') ) {
+    for my $joke ( $self->data->list('jokes') ) {
         if( exists $jokes{ $joke->{name} } ) {
             $jokes{ $joke->{name} }->{state} = $joke->{state};
             $jokes{ $joke->{name} }->{config} = thaw $joke->{config} if length $joke->{config};
@@ -270,13 +270,13 @@ sub update {
     upd_conf( $self, $info->{config} );
     
     # Insert if row does not exist.
-    my @jokes = $self->data->read( jokes => { name => $self->param('joke') } );
+    my $joke = $self->data->read_one( jokes => { name => $self->param('joke') } );
     
-    unless ( $#jokes ) {
+    if ( defined %$joke ) {
         $self->data->update( jokes =>
             {
                 config  => freeze($info->{config}),
-                state   => $jokes[0]->{state} | 0b100
+                state   => $joke->{state} | 0b100
             },
             {   name    => $self->param('joke') }
         );
@@ -312,11 +312,11 @@ sub update {
 sub toggle {
     my $self = shift;
 
-    my @jokes = $self->data->read( jokes => { name => $self->param('joke') } );
+    my $joke = $self->data->read_one( jokes => { name => $self->param('joke') } );
 
-    unless ( $#jokes ) {
+    if ( defined %$joke ) {
         # Change invert-bit.
-        my $new_state = $jokes[0]->{state} ^ 0b010;
+        my $new_state = $joke->{state} ^ 0b010;
         
         $self->data->update( jokes =>
             { state => $new_state },

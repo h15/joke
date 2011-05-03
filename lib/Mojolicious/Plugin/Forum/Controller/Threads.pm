@@ -4,10 +4,10 @@ use Mojo::Base 'Mojolicious::Controller';
 sub index {
 	my $self = shift;
 	
-	my @threads = $self->data->read( threads => { parent_id => 0 } );
+	my @threads = $self->data->list( threads => '*', { parent_id => 0 }, ['id'], 20, $self->param('offset') );
 	
 	map {
-        $_ = [$self->data->read( posts => { id => $_->{post_id} } )]->[0]
+        $_ = $self->data->read_one( posts => {id => $_->{post_id}} )
     } @threads;
 	
 	$self->stash( threads => \@threads );
@@ -17,25 +17,25 @@ sub index {
 sub read {
 	my $self = shift;
 	
-    my $thread = [$self->data->read( threads => { id => $self->param('id') } )]->[0];
-    my $parent = [$self->data->read( threads => { id => $thread->{'parent_id'} } )]->[0];
+    my $thread = $self->data->read_one( threads => {id => $self->param('id')}   );
+    my $parent = $self->data->read_one( threads => {id => $thread->{parent_id}} );
     
     return $self->error("Thread does not exist!") unless defined $thread;
     
-    my $parent_post = [$self->data->read( posts => { id => $thread->{'post_id'} } )]->[0];
-    my @posts = $self->data->read( posts => { thread_id => $self->param('id') } );
+    my $parent_post = $self->data->read_one( posts => {id => $thread->{post_id}} );
+    my @posts = $self->data->list( posts => '*', {thread_id => $self->param('id')}, ['id'], 20, $self->param('offset') );
     
     return $self->error("Thread is empty!") unless scalar @posts;
     
     my $head = ( $posts[0]->{id} != $thread->{post_id} ?
-        [$self->data->read( posts => { id => $thread->{post_id} } )]->[0]:
+        $self->data->read_one( posts => {id => $thread->{post_id}} ):
         $posts[0]
     );
     
-    my @threads = $self->data->read( threads => { parent_id => $self->param('id') } );
+    my @threads = $self->data->list( threads => '*', {parent_id => $self->param('id')}, ['id'], 20, $self->param('offset') );
     
     map {
-        $_ = [$self->data->read( posts => { id => $_->{post_id} } )]->[0]
+        $_ = $self->data->read_one( posts => {id => $_->{post_id}} )
     } @threads;
     
     $self->stash(
@@ -53,7 +53,7 @@ sub create {
     
     $self->data->create( threads => {
         parent_id => $self->param('parent_id'),
-        post_id => $self->param('post_id'),
+        post_id   => $self->param('post_id'),
     });
     
     $self->redirect_to( 'threads_read', id => $self->param('parent_id') );
@@ -65,7 +65,7 @@ sub update {
     $self->data->update( threads =>
         {
             parent_id => $self->param('parent_id'),
-            post_id => $self->param('post_id'),
+            post_id   => $self->param('post_id'),
         },
         { id => $self->param('id') }
     );

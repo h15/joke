@@ -42,61 +42,19 @@ sub register {
             # For example: (self, 'error', 'html',
             # { message => "Die, die, dive with me!" }).
             my ($self, $template, $format, $data) = @_;
-            
             $format ||= 'html';
-    
-            my $DATA = Mojo::Command->new->get_all_data( __PACKAGE__ );
             
-            $self->stash( %$data );
-            
-            $self->content_for(
-                body => $self->render(
-                    inline => $DATA->{$template . '.html.ep'}
-                )
-            );
-            
-            $self->render(
-                inline => $DATA->{'base.html.ep'},
+            $self->stash(
+                %$data, 
                 title => $template
             );
             
-            return;
+            $self->render(template => "message/$template");
         }
     );
 }
 
 1;
-
-__DATA__
-@@ base.html.ep
-<!doctype html>
-<html>
-    <head>
-%= stylesheet '/css/main.css';
-        <title>Joker &rarr; <%= $title %></title>
-    </head>
-    <body>
-        <%= content_for 'body' %>
---> </body>
-</html>
-
-@@ error.html.ep
-% content_for body => begin
-    <div class=page>
-        <div class="rounded error">
-            <%= $self->stash('message') %>
-        </div>
-    </div><!--
-% end
-
-@@ done.html.ep
-% content_for body => begin
-    <div class=page>
-        <div class="rounded done">
-            <%= $message %>
-        </div>
-    </div><!--
-% end
 
 __END__
 

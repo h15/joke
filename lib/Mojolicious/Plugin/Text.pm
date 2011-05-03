@@ -7,7 +7,7 @@ has depends => sub { [] };
 has config  => sub { {default => 'simple'} };
 
 sub joke {
-    my $self = shift;    
+    my $self = shift;
     {
        version => $self->version,
        about   => $self->about,
@@ -17,9 +17,26 @@ sub joke {
 }
 
 sub register {
-    my ( $self, $app, $conf ) = @_;
+    my ( $c, $app ) = @_;
+    my $self = new Mojolicious::Plugin::Text;
     
-    $conf ||= {};
+    my $conf ||= {
+        hosts  => [],
+        protos => [ qw/http https ftp ftps git/ ],
+        exts   => [],
+        imgs   => [ qw/png jpg jpeg bmp gif/ ],
+        default => $self->config->{default}
+    };
+    
+    $app->hook( before_dispatch => sub {
+        my $self = shift;
+        my %params = @{ $self->req->params->{params} };
+        
+        $params{$_} = $app->parse_text( $params{$_} ) for keys %params;
+        
+        $self->param( params => [ %params ] );
+    #    die $app->dumper( $self->req->params->{params} );
+    });
     
     $app->helper (
         parse_text => sub {
@@ -39,7 +56,7 @@ sub register {
             
             #
             my ($result, $str, $new_mode);
-            my $mode = $conf->{'default'};
+            my $mode = $conf->{default};
             
             # Parsing.
             while( $text =~ /\G(.*?)\n#!(.*?)\n/gcs ) {
@@ -54,16 +71,10 @@ sub register {
                 }
                 
                 $mode = $new_mode;
-                $mode ||= $conf->{'default'};
+                $mode ||= $conf->{default};
             }
             
             return $result;
-        }
-    );
-    
-    $app->helper (
-        simple => sub {
-            my ($self, $text) = @_;
         }
     );
     
@@ -129,11 +140,13 @@ sub simple {
         . 'href="' . $1 . '">'
         . (
             # if $file's $ext in @$img_exts.
-            ( grep { $_ eq $3 } @$imgs ) ?
-                # it's image!
-                "<img src=\"$1\" />" :
-                # just url.
-                $2
+            defined $3 ?
+                ( grep { $_ eq $3 } @$imgs ) ?
+                    # it's image!
+                    "<img src=\"$1\" />" :
+                    # just url.
+                    $2
+                : $2
         )
         . '</a>' . $4;
     }exig;

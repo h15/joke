@@ -10,26 +10,24 @@ sub login {
 	$self->IS( mail => $self->param('mail')	);
 	
 	# Get accounts by e-mail.
-	my @users = $self->data->read( users => { mail => $self->param('mail') } );
+	my $user = $self->data->read_one( users => { mail => $self->param('mail') } );
     
     # If this e-mail does not exist
     # or more than one account has this e-mail.
-    $self->error("This pair(e-mail and password) doesn't exist!") if $#users;
-    
-    my $user = $users[0];
+    return $self->error("This pair(e-mail and password) doesn't exist!") unless defined %$user;
     
     # Password test:
     #   hash != md5( regdate + password + salt )
-    my $s = $user->{'regdate'} . $self->param('passwd') . $self->stash('salt');
+    my $s = $user->{regdate} . $self->param('passwd') . $self->stash('salt');
     
-    if ( $user->{'password'} ne Digest::MD5::md5_hex($s) ) {
+    if ( $user->{password} ne Digest::MD5::md5_hex($s) ) {
         return $self->error( "This pair(e-mail and password) doesn't exist!" );
     }
     
     # Init session.
     $self->session (
-        user_id  => $user->{'id'},
-    )->redirect_to( 'users_read', id => $user->{'id'} );
+        user_id  => $user->{id},
+    )->redirect_to( 'users_read', id => $user->{id} );
 }
 
 sub logout {
@@ -44,19 +42,18 @@ sub mail_request {
 	$self->IS( mail => $self->param('mail') );
 	
     # Get accounts by e-mail.
-	my @users = $self->data->read( users => {mail => $self->param('mail')} );
+	my $user = $self->data->read_one( users => {mail => $self->param('mail')} );
     
     # if 0 - all fine
-    $self->error( "This e-mail doesn't exist in data base!" ) if $#users;
+    return $self->error( "This e-mail doesn't exist in data base!" ) unless defined %$user;
     
     # Generate and save confirm key.
     my $confirm_key = Digest::MD5::md5_hex(rand);
     
-    $self->update(
-        users =>
+    $self->update( users =>
         {
             confirm_key  => $confirm_key,
-            confirm_date => time
+            confirm_date => time + 3600 * 24 * $self->joker->jokes->{User}->{config}->{confirm}
         },
         { email => $self->param('mail') }
     );
@@ -73,16 +70,16 @@ sub mail_confirm {
     my $self = shift;
     my $mail = $self->param('mail');
     
-    my @users = $self->data->read( users => {
+    my $user = $self->data->read_one( users => {
         mail => $mail,
         confirm_key => $self->param('key')
     });
     
     # This pair does not exist.
-    return $self->error('Auth failed!') if $#users;
+    return $self->error('Auth failed!') unless defined %$user;
     
     # Too late
-    if ( $users[0]->{'confirm_time'} > time + 86400 * $self->joker->jokes->{'User'}->{'config'}->{'confirm'} ) {
+    if ( $user->{confirm_time} > time + 86400 * $self->joker->jokes->{User}->{config}->{confirm} ) {
         $self->data->update( user =>
             { confirm_key => '', confirm_time => 0 },
             { mail => $mail }
@@ -90,11 +87,11 @@ sub mail_confirm {
         return $self->error('Auth failed (too late)!');
     }
     
-    my $user = [ $self->data->read( users => {mail => $mail} ) ]->[0];
+    my $user = $self->data->read_one(users => {mail => $mail});
     
     $self->session (
-        user_id  => $user->{'id'},
-    )->redirect_to( 'users_read', id => $user->{'id'} );
+        user_id  => $user->{id},
+    )->redirect_to( 'users_read', id => $user->{id} );
 }
 
 1;

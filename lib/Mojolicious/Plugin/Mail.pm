@@ -1,57 +1,50 @@
 package Mojolicious::Plugin::Mail;
-
 use Mojo::Base 'Mojolicious::Plugin';
 
-our $VERSION = '0.1';
+has version => 0.1;
+has about   => 'Plugin for Mail system.';
+has depends => sub { [ qw/Message/ ] };
+has config  => sub {{
+    sub_plugin => 'Mail',
+    conf       => {
+        from     => 'no-reply@lorcode.org',
+        encoding => 'base64',
+        type     => 'text/html',
+        how      => 'sendmail',
+        howargs  => [ '/usr/sbin/sendmail -t' ]
+    }
+}};
 
-#
-#   Info method for Joker plugin manager.
-#
-
-sub info {
-    my ($self, $field) = @_;
+sub joke {
+    my ( $self, $app ) = @_;
     
-    my $info = {
-        version => $VERSION,
-        author  => 'h15 <georgy.bazhukov@gmail.com>',
-        about   => 'Plugin for Mail system.',
-        fields  => {
-        # Needed fields.
-        },
-        depends => [ qw/Message/ ],
-        config  => {
-            sander => {
-                from     => 'no-reply@lorcode.org',
-                encoding => 'base64',
-                type     => 'text/html',
-                how      => 'sendmail',
-                howargs  => [ '/usr/sbin/sendmail -t' ]
-            }
-        }
-    };
+    my $plugin = $app->data->read_one( jokes => {name => 'Mail'} );
+    $self->config( thaw $plugin->{config} ) if defined $plugin->{config} && length $plugin->{config};
     
-    return $info->{$field} if $field;
-    return $info;
+    {
+       version => $self->version,
+       about   => $self->about,
+       depends => $self->depends,
+       config  => $self->config
+    }
 }
 
 sub register {
     my ( $self, $app ) = @_;
     
-    $app->plugin( mail::mail => $self->info('config')->{'sander'} );
+    $self->joke( $app );
     
-    $app->helper (
-        mail => sub {
-            return shift;
-        }
-    );
+    $app->plugins->namespaces(['Mojolicious::Plugin::Mail']);
+    $app->plugin( lc $self->config->{sub_plugin}, $self );
+
+    # clean up
+    $app->plugins->namespaces(['Mojolicious::Plugin']);
     
     $app->helper (
         confirm => sub {
             my ($self, $data) = @_;
             
-            $self->send (
-                confirm => $data
-            );
+            $self->send(confirm => $data);
         }
     );
     

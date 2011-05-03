@@ -28,6 +28,16 @@ sub create_repo {
     $self->redirect_to('gits_read', repo => $self->param('name'));
 }
 
+sub list {
+    my $self = shift;
+    
+    $self->stash (
+        repos => [ keys %{$self->gitosis->{groups}} ]
+    );
+    
+    $self->render;
+}
+
 sub read {
     my $self = shift;
     my $n = $self->param('repo');

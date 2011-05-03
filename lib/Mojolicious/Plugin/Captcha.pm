@@ -6,13 +6,16 @@ use Storable 'thaw';
 has version => 0.1;
 has about   => 'Prevent bots attack.';
 has depends => sub { [] };
-has config  => sub { { sub_plugin => "Simple", config => {} } };
+has config  => sub {{
+    sub_plugin => "Simple",
+    config     => {}
+}};
 
 sub joke {
     my ( $self, $app ) = @_;
     
-    my $plugin = [ $app->data->read( jokes => { name => 'Captcha' } ) ]->[0];
-    $self->config( thaw $plugin->{'config'} ) if defined $plugin->{'config'} && length $plugin->{'config'};
+    my $plugin = $app->data->read_one( jokes => {name => 'Captcha'} );
+    $self->config( thaw $plugin->{config} ) if defined $plugin->{config} && length $plugin->{config};
    
     {
        version => $self->version,
@@ -28,7 +31,9 @@ sub register {
     $self->joke( $app );
     
     $app->plugins->namespaces(['Mojolicious::Plugin::Captcha']);
-    $app->plugin( lc $self->config->{'sub_plugin'}, $self );
+    $app->plugin( lc $self->config->{sub_plugin}, $self );
+
+    # clean up
     $app->plugins->namespaces(['Mojolicious::Plugin']);
 }
 

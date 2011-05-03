@@ -1,7 +1,6 @@
+package Mojolicious::Plugin::Data::Sql;
 use strict;
 use warnings;
-
-package Mojolicious::Plugin::Data::Sql;
 
 use DBIx::Simple;
 use SQL::Abstract;

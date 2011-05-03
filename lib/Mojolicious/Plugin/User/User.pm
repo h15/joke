@@ -1,6 +1,5 @@
 package Mojolicious::Plugin::User::User;
 use Mojo::Base -base;
-use Data::Dumper;
 
 has data => sub { {} };
 
@@ -10,18 +9,18 @@ sub update {
 }
 
 sub is_active {
-    shift->data->{'ban_reason'} == 0 ? 1 : 0;
+    shift->data->{ban_reason} == 0 ? 1 : 0;
 };
 
-sub is_admin {#return 1;
+sub is_admin {
     # 3rd - is default admin's group
     my $self = shift;
     
-    if ( grep { $_ == 3 } split ' ', $self->data->{'groups'} ) {
+    if ( grep { $_ == 3 } split ' ', $self->data->{groups} ) {
         return 1;
     }
     return 0;
-};
+}
 
 1;
 

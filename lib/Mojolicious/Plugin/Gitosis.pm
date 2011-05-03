@@ -32,6 +32,7 @@ sub register {
     # Routes
     my $r = $app->routes->route('/git')->to( namespace => 'Mojolicious::Plugin::Gitosis::Controller' );
     
+    $r->route('/')->via('get')->to('gits#list')->name('gits_index');
     $r->route('/new')->via('post')->to('gits#create_repo')->name('gits_create');
     $r->route('/new')->via('get')->to(cb => sub { shift->render(template => 'gits/form') })->name('gits_new');
     $r->route('/key')->via('post')->to('gits#add_key', dir => $self->config->{git_home} )->name('gits_key');

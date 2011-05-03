@@ -2,7 +2,6 @@ package Mojolicious::Plugin::User;
 use Mojo::Base 'Mojolicious::Plugin';
 
 use Digest::MD5 "md5_hex";
-use MIME::Base64;
 
 use Mojolicious::Plugin::User::User;
 
@@ -12,7 +11,7 @@ has depends => sub { [ qw/Data Message Mail/ ] };
 has config  => sub {{
     cookies => 'some random string',
     confirm => 7,
-    salt    => '',
+    salt    => 'some random string',
 }};
 
 sub joke {
@@ -25,38 +24,9 @@ sub joke {
     }
 }
 
-=head1 Plugin User
-
-=head2 About
-
-Use this plugin to enable ACL (access control list), authentification and CRUD
-users. It used by Joke default.
-
-=head2 Structure
-
-    Mojolicious::Plugin
-     `- User.pm                 # Routes, info, hook for running on each request
-         |- User.pm             # User object
-         `- Controller
-             |- Auths.pm        # Login/out, by mail
-             `- Users.pm        # CRUD+L
-
-=head3 Mojolicious::Plugin::User
-
-=over
-
-=item register
-
-Plugin's default method for init self on load. Register consists hook for reinit
-on every dispatch (every request in our case).
-
-=back
-
-=cut
-
 sub register {
-    my ( $c, $app ) = @_;
-    my $self = new Mojolicious::Plugin::User;
+    my ( $self, $app ) = @_;
+#    my $self = new Mojolicious::Plugin::User;
     my $user = new Mojolicious::Plugin::User::User;
     
     $app->secret( $self->config->{'cookies'} );
@@ -70,19 +40,18 @@ sub register {
         # Anonymous has 1st id.
         $id ||= 1;
         
-        $app->stash( banned => 0 );
-        $user->update( [$self->data->read( users => { id => $id } )]->[0] );
+        $user->update( $self->data->read_one(users => {id => $id}) );
         
         unless ( $user->is_active ) {
-            my $ban = $user->data->{'ban_reason'};
-            $user->update( [$self->data->read( users => { id => 1 } )]->[0] );
-            $user->data->{'ban_reason'} = $ban;
+            my $ban = $user->data->{ban_reason};
+            $user->update( $self->data->read_one(users => {id => 1}) );
+            $user->data->{ban_reason} = $ban;
         }
     });
     
-    $app->helper( user => sub { $user } );
+    $app->helper(user => sub { $user });
     
-    $app->stash( salt => $app->joker->jokes->{'User'}->{'config'}->{'salt'} );
+    $app->stash( salt => $app->joker->jokes->{User}->{config}->{salt} );
     
     # Routes
     my $r = $app->routes->route('/user')->to( namespace => 'Mojolicious::Plugin::User::Controller' );
@@ -108,7 +77,7 @@ sub register {
         render_user => sub {
             my ( $self, $id ) = @_;
             
-            my $user = [$self->data->read( users => {id => $id} )]->[0];
+            my $user = $self->data->read_one(users => {id => $id});
             
             return new Mojo::ByteStream (
                 '<a href="' . $app->url_for('users_read', id => $id) . '" class="' .
@@ -122,6 +91,29 @@ sub register {
 1;
 
 __END__
+
+=head1 Plugin User
+
+=head2 About
+
+Use this plugin to enable ACL (access control list), authentification and CRUD
+users. It used by Joke default.
+
+=head2 Structure
+
+    Mojolicious::Plugin
+     `- User.pm                 # Routes, info, hook for running on each request
+         |- User.pm             # User object
+         `- Controller
+             |- Auths.pm        # Login/out, by mail
+             `- Users.pm        # CRUD+L
+
+=head3 Mojolicious::Plugin::User
+
+=item register
+
+Plugin's default method for init self on load. Register consists hook for reinit
+on every dispatch (every request in our case).
 
 =head2 Data Base Struct
 

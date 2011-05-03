@@ -9,18 +9,18 @@ our $VERSION = '0.1';
 sub register {
 	my ($self,$app,$captcha) = @_;
 	
-	%{$captcha->config->{'config'}} = ();
+	%{$captcha->config->{config}} = ();
 	
 	# for example
 	my @questions = (
-	    [ 'q', 'a' ],
-	    [ 'qq', 'aa' ],
+	    [ 'q'  , 'a'   ],
+	    [ 'qq' , 'aa'  ],
 	    [ 'qqq', 'aaa' ],
 	);
 	
 	# clean up Captcha db
 	$app->data->update( jokes =>
-	    { config => freeze { sub_plugin => 'Simple' } },
+	    { config => freeze({ sub_plugin => 'Simple' }) },
 	    { name => 'Captcha' }
 	);
 	
@@ -29,7 +29,8 @@ sub register {
 			my $self = shift;
 			my $id   = int rand(@questions);
 			
-			$self->session( captcha  => $id );
+			$self->session(captcha => $id);
+			
 			return new Mojo::ByteStream (
 			    "<p>" . $questions[$id]->[0] . "</p><input name='answer'>"
 			);

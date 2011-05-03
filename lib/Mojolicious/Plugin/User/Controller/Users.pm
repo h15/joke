@@ -5,18 +5,18 @@ sub read {
     my $self = shift;
     
 	# Get accounts by id.
-	my @users = $self->data->read( users => { id => $self->stash('id') } );
+	my $user = $self->data->read_one( users => { id => $self->stash('id') } );
     
-    $self->error("User with this id doesn't exist!") if $#users;
+    return $self->error("User with this id doesn't exist!") unless defined %$user;
     
-    if ( $self->user->data->{'id'} != 1                         # not Anonymous
-        && ( $self->param('id') == $self->user->data->{'id'}    # and Self
-             || $self->user->is_admin()                         #   or Admin.
+    if ( $self->user->data->{id} != 1                         # not Anonymous
+        && ( $self->param('id') == $self->user->data->{id}    # and Self
+             || $self->user->is_admin()                       #   or Admin.
         ) ) {
-        $self->read_extended($users[0]);
+        $self->read_extended($user);
     }
     else {
-        $self->stash( user => $users[0] );
+        $self->stash(user => $user);
         $self->render;
     }
 }
@@ -35,9 +35,9 @@ sub create {
     
     my $key = Digest::MD5::md5_hex(rand);
     
-    my @users = $self->data->read( users => {mail => $self->param('mail')} );
+    my $user = $self->data->read_one( users => {mail => $self->param('mail')} );
     
-    return $self->redirect_to('users_form') unless $#users;
+    return $self->redirect_to('users_form') if defined %$user;
     
     #
     #   TODO: Send mail
@@ -46,7 +46,7 @@ sub create {
     $self->data->create( users => {
         mail    => $self->param('mail'),
         regdate => time,
-        confirm_time => time + 86400 * $self->joker->jokes->{'User'}->{'config'}->{'confirm'},
+        confirm_time => time + 86400 * $self->joker->jokes->{User}->{config}->{confirm},
         confirm_key  => $key
     });
     
@@ -57,14 +57,12 @@ sub update {
     my $self = shift;
     
 	# Get accounts by id.
-	my @users = $self->data->read( users => { id => $self->stash('id') } );
+	my $user = $self->data->read_one( users => {id => $self->stash('id')} );
 	
-    $self->error("User with this id doesn't exist!") if $#users;
+    return $self->error("User with this id doesn't exist!") unless defined %$user;
     
-    my $user = $users[0];
-    
-    unless ( $self->user->data->{'id'} != 1
-        && ( $self->param('id') == $self->user->data->{'id'}
+    unless ( $self->user->data->{id} != 1
+        && ( $self->param('id') == $self->user->data->{id}
             || $self->user->is_admin()
         ) ) {
         return $self->error("Permission denied!")
@@ -75,11 +73,11 @@ sub update {
     
     %q = ( %q, name => $self->param('name') ) if defined $self->param('name') && ! defined $user->{'name'};
     %q = ( %q, mail => $self->param('mail') ) if defined $self->param('mail');
-    %q = ( %q, ban_time => $self->param('ban_time') ) if defined $self->param('ban_time');
+    %q = ( %q, ban_time   => $self->param('ban_time') )   if defined $self->param('ban_time');
     %q = ( %q, ban_reason => $self->param('ban_reason') ) if defined $self->param('ban_reason');
     
     if ( defined $self->param('pass') && $self->param('pass') eq $self->param('pass2') ) {
-        my $s = $user->{'regdate'} . $self->param('pass') . $self->stash('salt');
+        my $s = $user->{regdate} . $self->param('pass') . $self->stash('salt');
         %q = ( %q, password => Digest::MD5::md5_hex($s) )
     }
     

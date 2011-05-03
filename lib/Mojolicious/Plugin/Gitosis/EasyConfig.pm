@@ -34,7 +34,7 @@ sub new {
         }
         close F;
         
-        delete $obj->{groups}->{'gitosis-admin'};
+        # delete $obj->{groups}->{'gitosis-admin'};
     }
     else {
         print STDERR "\n[-]\tNeed file name!\n"             unless exists $args->{file};

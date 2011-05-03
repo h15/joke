@@ -10,25 +10,25 @@ sub register {
 	my ($self,$app,$captcha) = @_;
 	my $conf;
 	
-	# For Joke.
-	unless ( defined $captcha->config->{'config'}->{'public_key'} &&
-	         defined $captcha->config->{'config'}->{'private_key'} ) {
+	# For Joke
+	unless ( defined $captcha->config->{config}->{public_key} &&
+	         defined $captcha->config->{config}->{private_key} ) {
 	    
 	    $app->data->update( jokes =>
 	        {
-	            config => freeze {
+	            config => freeze({
 	                sub_plugin => 'Recaptcha',
 	                config => {
 	                    public_key  => '',
 	                    private_key => ''
 	                }
-	            }
+	            })
             },
 	        { name => 'Captcha' }
 	    );
 	}
 	else {
-	    $conf = $captcha->config->{'config'};
+	    $conf = $captcha->config->{config};
 	}
 	# end
 	

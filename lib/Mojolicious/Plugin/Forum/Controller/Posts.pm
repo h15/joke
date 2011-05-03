@@ -4,11 +4,11 @@ use Mojo::Base 'Mojolicious::Controller';
 sub read {
     my $self = shift;
     
-    my $post = [$self->data->read( posts => { id => $self->param('post') } )]->[0];
-    my $thread = [$self->data->read( threads => { id => $post->{'thread_id'} } )]->[0];
+    my $post   = $self->data->read_one( posts   => {id => $self->param('post')} );
+    my $thread = $self->data->read_one( threads => {id => $post->{thread_id}}   );
     
     my $head = ( $post->{id} != $thread->{post_id} ?
-        [$self->data->read( posts => { id => $thread->{post_id} } )]->[0]:
+        $self->data->read_one( posts => {id => $thread->{post_id}} ):
         $post
     );
     
@@ -38,7 +38,7 @@ sub create {
         return $self->error("Cann't save post.") unless $id;   
     }
     
-    my $thread = [$self->data->read( threads => { id => $id } )]->[0];
+    my $thread = $self->data->read_one( threads => {id => $id} );
     
     my $parent = ( +$self->param('parent_id') ?
         $self->param('parent_id') :
