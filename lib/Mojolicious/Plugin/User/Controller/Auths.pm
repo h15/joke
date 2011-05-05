@@ -50,12 +50,12 @@ sub mail_request {
     # Generate and save confirm key.
     my $confirm_key = Digest::MD5::md5_hex(rand);
     
-    $self->update( users =>
+    $self->data->update( users =>
         {
             confirm_key  => $confirm_key,
-            confirm_date => time + 3600 * 24 * $self->joker->jokes->{User}->{config}->{confirm}
+            confirm_time => time + 3600 * 24 * $self->joker->jokes->{User}->{config}->{confirm}
         },
-        { email => $self->param('mail') }
+        { mail => $self->param('mail') }
     );
     
     # Send mail

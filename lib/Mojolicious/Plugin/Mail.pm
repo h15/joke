@@ -21,7 +21,8 @@ sub joke {
 }
 
 sub register {
-    my ( $self, $app, $conf ) = @_;
+    my ( $c, $app, $conf ) = @_;
+    
     $conf ||= {};
     
     if ( defined %$conf ) {
@@ -31,7 +32,15 @@ sub register {
     $app->helper( mail => sub {
         my ( $self, $type, $mail, $title, $data ) = @_;
         
-        $self->stash(%$data, title => $title);
+        return $self->error('Not enough data for mail!') unless defined $type && defined $mail;
+        $title ||= '';
+        $data  ||= {};
+        
+        $self->stash(
+            %$data,
+            title => $title,
+            host  => 'http://lorcode.org:3000',
+        );
         
         my $html = $self->render (
             partial    => 1,
@@ -39,11 +48,12 @@ sub register {
         );
         
         MIME::Lite->new (
-            From    => $conf->{from},
+            From    => 'no-reply@lorcode.org',
             To      => $mail,
             Subject => $self->l($title),
+            Type    => 'text/html',
             Data    => $html,
-        )->send("sendmail", "/usr/lib/sendmail -t");
+        )->send;
     });
 }
 
