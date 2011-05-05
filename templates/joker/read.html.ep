@@ -71,10 +71,10 @@
         <tr>
             <td>config</td>
             <td>
-% if ( keys %{$plugin->{'config'}} ) {
+% if ( keys %{$plugin->{config}} ) {
 <form action="<%= url_for('joker_update', joke => $plugin->{'name'}) %>"
     method=POST>
-%== html_hash_tree( $plugin->{'config'} );
+%== html_hash_tree( $plugin->{config} );
     <input type="submit" class="alignright">
 </form>
 % }

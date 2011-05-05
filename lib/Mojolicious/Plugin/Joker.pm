@@ -39,6 +39,7 @@ sub register {
             my ( $self, $config, $parent ) = @_;
             my $ret = '';
             $parent ||= '';
+            $config = {} unless defined %$config;
             
             for my $k ( keys %$config ) {
                 $ret .= "<tr><td>$k</td><td name='$parent-$k'>";
@@ -59,7 +60,7 @@ sub register {
             my ($self, $type, $val) = @_;
 
             if  ( $type eq 'mail' ) {
-                return 1 if $val =~ m/^[a-z0-9_\-.]+@[a-z0-9_\-.]+$/i;
+                return 1 if $val =~ m/^[a-z0-9_\-.]+\@[a-z0-9_\-.]+$/i;
             }
             return 0;
         }
@@ -123,28 +124,32 @@ sub wake_up {
     my ( $self ) = @_;
     
     # Read all joke's accounts from data base.
-    my %jokes = map { $_->{name}, $_ } $self->app->data->list('jokes'); 
+    my %jokes;
+    
+    $jokes{$_} = $self->read($_) for @{$self->core};
+    $jokes{ $_->{name} } = $_ for $self->app->data->list('jokes');
     
     # Change state.
     for ( keys %jokes ) {
+        next unless defined $jokes{$_}->{state};
         # Annul change-bit.
         $jokes{$_}->{state} &= 0b011;
         # Invert active-bit if invert-bit is 1.
         $jokes{$_}->{state} ^= 0b011 if $jokes{$_}->{state} & 0b010;
     }
     
+    $jokes{$_}->{state} = 0b001 for @{$self->core};
+    
     $self->app->data->update( jokes =>
         { state => $jokes{$_}->{state} },
         { name => $_ }
     ) for keys %jokes;
-    
-    # Load only active or core jokes.
-    $jokes{$_}->{state} = 0b001 for @{$self->core};
-    
+
     for ( keys %jokes ) {
         delete $jokes{$_}, next if $jokes{$_}->{state} != 0b001;
         
         $self->jokes->{$_} = $self->read($_);
+        
         $self->jokes->{$_}->{config} = thaw $jokes{$_}->{config} if defined $jokes{$_}->{config} && length $jokes{$_}->{config};
         $self->jokes->{$_}->{config} ||= {};
     }

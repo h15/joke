@@ -11,7 +11,7 @@ sub read {
     
     if ( $self->user->data->{id} != 1                         # not Anonymous
         && ( $self->param('id') == $self->user->data->{id}    # and Self
-             || $self->user->is_admin()                       #   or Admin.
+             || $self->user->is_admin()                       #  or Admin.
         ) ) {
         $self->read_extended($user);
     }
@@ -39,9 +39,14 @@ sub create {
     
     return $self->redirect_to('users_form') if defined %$user;
     
-    #
-    #   TODO: Send mail
-    #
+    $self->mail( confirm =>
+        $self->param('mail'),
+        'Registration',
+        {
+            key  => $key,
+            mail => $self->param('mail')
+        }
+    );
     
     $self->data->create( users => {
         mail    => $self->param('mail'),
@@ -50,7 +55,7 @@ sub create {
         confirm_key  => $key
     });
     
-    $self->done('Check your mail.');
+    return $self->done('Check your mail.');
 }
 
 sub update {
