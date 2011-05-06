@@ -1,13 +1,15 @@
 package Mojolicious::Plugin::Mail;
 use Mojo::Base 'Mojolicious::Plugin';
 
+use Storable 'thaw';
 use MIME::Lite;
 
 has version => 0.1;
 has about   => 'Plugin for Mail system.';
 has depends => sub { [ qw/Message/ ] };
 has config  => sub {{
-    from => 'no-reply@lorcode.org'
+    from => '',
+    site => '',
 }};
 
 sub joke {
@@ -21,25 +23,23 @@ sub joke {
 }
 
 sub register {
-    my ( $c, $app, $conf ) = @_;
+    my ( $plugin, $app, $conf ) = @_;
+
+    my $plug = $app->data->read_one(jokes => {name => 'Mail'});
     
-    $conf ||= {};
-    
-    if ( defined %$conf ) {
-        $self->config->{$_} = $conf->{$_} for keys %$conf;
-    }
+    $plugin->config(thaw $plug->{config}) if defined $plug->{config} && length $plug->{config};
     
     $app->helper( mail => sub {
         my ( $self, $type, $mail, $title, $data ) = @_;
-        
+
         return $self->error('Not enough data for mail!') unless defined $type && defined $mail;
         $title ||= '';
         $data  ||= {};
-        
+
         $self->stash(
             %$data,
             title => $title,
-            host  => 'http://lorcode.org:3000',
+            host  => $plugin->config->{site},
         );
         
         my $html = $self->render (
@@ -48,7 +48,7 @@ sub register {
         );
         
         MIME::Lite->new (
-            From    => 'no-reply@lorcode.org',
+            From    => $plugin->config->{from},
             To      => $mail,
             Subject => $self->l($title),
             Type    => 'text/html',
