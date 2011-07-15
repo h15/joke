@@ -3,9 +3,24 @@ use Mojo::Base 'Mojolicious';
 
 # This method will run once at server start
 sub startup {
-  my $self = shift;
-  
-  $self->plugin('joker');
+    our $self = shift;
+}
+
+sub import {
+    my ( $self, $base ) = @_;
+    
+    if ( $base ne '-base' ) {
+        $base =~ s/::/\//g,
+        require "$base.pm" unless $base->can('new')
+    }
+    else { $base = 'UNIVERSAL' }
+    
+    no strict 'refs';
+    
+    my $caller = caller;
+       
+    push @{"${caller}::ISA"}, $base, 'Mojo::Base';
+         *{"${caller}::app"} = sub { $Joke::self };
 }
 
 1;

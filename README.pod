@@ -3,7 +3,7 @@
 
 =head1 What is J:)ke?
 
-It's a CMS written in Perl. It uses Mojolicious.
+It's a framework written in Perl. It uses Mojolicious.
 
 =head1 How to run it?
 
@@ -17,32 +17,32 @@ Run in joke's root directory
 
 =head1 Data base struct
 
-=head3 joke table
+Comming soon
 
-    UNIC varchar 255 | Decimal 1 | Tiny BLOB
-    name             | state(0)  | config
-    
-    state: change-bit | invert-bit | active-bit
-    1 - if currently working;
-    +2 - if invert working bit on restart;
-    +4 - if configuration changed.
+=head1 Short Change log
 
-=head3 User table
+=item 2011-03-06
 
-    id              int 11                  (++)
-    groups          tinytext                (empty)
-    name            varchar 32  utf8-bin    (anonymous)
-    mail            varchar 64  ascii-bin
-    regdate         int 11                  (NOW on create)
-    password        varchar 32              (0)
-    ban_reason      int 2                   (0)
-    ban_time        int 11                  (0)
-    confirm_key     varchar 32              (generate on create)
-    confirm_time    int 11                  (NOW on create)
+Starting write CodeWars - site for LorCode. It should had many
+features.
 
-=head2 for MySQL
+=item 2011-03-22
 
-In file C<mysql.sql>.
+It's too hard to just write so big app. Starting Joke CMS to resolve small
+problems.
+
+=item 2011-05-10
+
+Starting Gitty - simple app based on Joke's code base.
+
+=item 2011-06-22
+
+Gitty had nice code. But many things are too shared to use it only in this
+project.
+
+=item 2011-07-14
+
+Try again to make nice CMS (or framework). New code in Joke.
 
 =head1 COPYRIGHT AND LICENSE
 
