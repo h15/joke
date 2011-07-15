@@ -21,6 +21,8 @@ Comming soon
 
 =head1 Short Change log
 
+=over
+
 =item 2011-03-06
 
 Starting write CodeWars - site for LorCode. It should had many
@@ -43,6 +45,8 @@ project.
 =item 2011-07-14
 
 Try again to make nice CMS (or framework). New code in Joke.
+
+=back
 
 =head1 COPYRIGHT AND LICENSE
 
