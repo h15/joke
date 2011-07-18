@@ -1,5 +1,5 @@
 package Joke::Model;
-use Joke -base;
+use Joke::Base -base;
 
 use Storable 'freeze';
 
@@ -10,7 +10,7 @@ sub new {
     my $self = shift;
 
     my $path = "./lib/Joke/Model/Config.pm";
-    my $code = freeze( $self->app->conf->db );
+    my $code = {};#freeze( $self->app->config->db );
     
     open  FILE, "> $path" or die "[-] Cann't write into file $path";
    

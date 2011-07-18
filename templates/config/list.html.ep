@@ -1,0 +1,11 @@
+% extends 'admin_base';
+
+% content_for header => begin
+%=l 'List of customizable modules'
+% end
+
+% content_for body => begin
+
+%= config->render config('Config')
+
+% end

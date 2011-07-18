@@ -1,32 +1,18 @@
 package Joke;
 use Mojo::Base 'Mojolicious';
-use Joke::Model;
 
-has model_obj => undef;
+use Joke::Model;
+use Joke::Config;
+
+has model_obj  => undef;
+has config_obj => undef;
 
 # This method will run once at server start
 sub startup {
     our $self = shift;
-        $self->model_obj( new Joke::Model );
+        $self->config_obj( new Joke::Config );
+        $self->model_obj ( new Joke::Model  );    
 }
-
-sub import {
-    my ( $self, $base ) = @_;
-    
-    if ( $base ne '-base' ) {
-        $base =~ s/::/\//g,
-        require "$base.pm" unless $base->can('new')
-    }
-    else { $base = 'UNIVERSAL' }
-    
-    no strict 'refs';
-    
-    my $caller = caller;
-       
-    push @{"${caller}::ISA"}, $base, 'Mojo::Base';
-         *{"${caller}::app"} = sub { $Joke::self };
-}
-#"
 
 sub model {
     my ( $self, $name, $id ) = @_;
@@ -47,9 +33,19 @@ sub model {
     return $self->model_obj;
 }
 
+sub config {
+    my ( $self, $name, $data ) = @_;
+    
+    return $self->config_obj unless $name;
+
+    $self->config_obj->config($name);
+    $self->config_obj->_set($name => $data) if defined $data;
+    $self->config_obj->_get($name);
+}
+
 1;
 
-__END__
+__END__ 
 
 =head1 COPYRIGHT AND LICENSE
 

@@ -1,0 +1,34 @@
+% languages 'ru';
+<!doctype html>
+<html lang=ru>
+    <head>
+        %= stylesheet '/admin/css/main.css'
+        %= javascript 'http://ajax.googleapis.com/ajax/libs/jquery/1.6.1/jquery.min.js'
+        %= javascript '/admin/js/main.js'
+        <meta charset=utf-8>
+    </head>
+    <body id=body>
+        <header>
+            <h1>
+%= content_for 'header'
+            </h1>
+        </header>
+        <nav>
+            <a href="<%= url_for( config_read => id => 'config' ) %>">
+            <div class="tab">
+                <%=l 'Config' %>
+            </div>
+            </a>
+% for my $mod ( config->mods ) {
+            <a href="<%= url_for( config_read => id => lc $mod ) %>">
+            <div class="tab">
+                <%=l $mod %>
+            </div>
+            </a>
+% }
+        </nav>
+        <article class=page>
+%= content_for 'body'
+        </article>
+    </body>
+</html>
