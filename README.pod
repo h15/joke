@@ -5,15 +5,19 @@
 
 It's a framework written in Perl. It uses Mojolicious.
 
+=head1 Install
+
+    sudo -s 'curl -L cpanmin.us | perl - Mojolicious Rose::DB Rose::DB::Object'
+    git clone git://github.com/h15/joke.git
+    cd joke
+    ./script/joke install host=localhost driver=mysql database=gitty \
+    username=gitty password=secret
+
 =head1 How to run it?
 
 Run in joke's root directory 
 
     ./script/joke daemon
-
-=head2 Do you install Mojolicious already?
-
-    sudo -s 'curl -L cpanmin.us | perl - Mojolicious'
 
 =head1 Data base struct
 
