@@ -30,8 +30,8 @@ if ( $ARGV[0] eq 'install' )
     }
     
     open  F, '+>./lib/Joke/config.dat' or
-        die '[-] Cann\'t write into ./lib/Joke/config.dat';
-    print F freeze \%conf;
+        die '[-] Can\'t write into ./lib/Joke/config.dat';
+    print F freeze { db => \%conf };
     close F;
     
     exit;

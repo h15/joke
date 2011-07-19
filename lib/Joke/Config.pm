@@ -6,7 +6,7 @@ use Storable qw(freeze thaw);
 has configs => sub { {} };
 has config  => undef;
 
-sub new {
+sub init {
     my $self = shift;
     
     {

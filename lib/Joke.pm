@@ -1,17 +1,26 @@
 package Joke;
 use Mojo::Base 'Mojolicious';
 
+use Joke::User;
 use Joke::Model;
 use Joke::Config;
 
-has model_obj  => undef;
 has config_obj => undef;
+has  model_obj => undef;
+has   user_obj => undef;
 
 # This method will run once at server start
 sub startup {
     our $self = shift;
+
         $self->config_obj( new Joke::Config );
-        $self->model_obj ( new Joke::Model  );    
+        $self->config_obj->init;
+
+        $self->model_obj ( new Joke::Model );
+        $self->model_obj->init;
+
+        $self->user_obj  ( new Joke::User );
+        $self->user_obj->init;
 }
 
 sub model {
@@ -37,11 +46,13 @@ sub config {
     my ( $self, $name, $data ) = @_;
     
     return $self->config_obj unless $name;
-
+    
     $self->config_obj->config($name);
     $self->config_obj->_set($name => $data) if defined $data;
     $self->config_obj->_get($name);
 }
+
+sub user { shift->user_obj->data }
 
 1;
 
